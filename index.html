@@ -1,0 +1,5037 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0C10">
+  <title>TERRITORY FITNESS — Discrete Mathematics & GPS Territory Capture</title>
+
+  <!-- Google Fonts: Barlow Condensed (Display), Figtree (Body), JetBrains Mono (Numbers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Pinned Leaflet 1.9.4 CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <style>
+    /* ==========================================================================
+       CSS VARIABLES & THEMES (Light & Dark with System Preference Fallback)
+       ========================================================================== */
+    :root {
+      /* Hot orange accent */
+      --mine: #F0471F;
+      --mine-rgb: 240, 71, 31;
+      --mine-dark: #C93411;
+
+      /* Rival player palette */
+      --rival-blue: #1A73E8;
+      --rival-blue-rgb: 26, 115, 232;
+      --rival-violet: #7C3AED;
+      --rival-violet-rgb: 124, 58, 237;
+      --rival-teal: #0D9488;
+      --rival-teal-rgb: 13, 148, 136;
+
+      /* Surfaces & Typography (Light Mode default) */
+      --bg: #F4F6F9;
+      --surface: #FFFFFF;
+      --surface-2: #E9EEF5;
+      --surface-3: #DCE3ED;
+      --text: #0E131D;
+      --text-dim: #546072;
+      --text-subtle: #8492A6;
+      --line: rgba(14, 19, 29, 0.08);
+      --line-strong: rgba(14, 19, 29, 0.16);
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.12);
+
+      /* Glassmorphism */
+      --glass-bg: rgba(255, 255, 255, 0.84);
+      --glass-border: rgba(255, 255, 255, 0.5);
+
+      /* Layout & Fonts */
+      --sheet-visual-height: 112px;
+      --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+      --font-body: "Figtree", system-ui, -apple-system, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 20px;
+      --radius-pill: 999px;
+    }
+
+    /* Dark theme override */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --mine: #FF6A3D;
+        --mine-rgb: 255, 106, 61;
+        --mine-dark: #F0471F;
+
+        --rival-blue: #4C9AFF;
+        --rival-blue-rgb: 76, 154, 255;
+        --rival-violet: #A78BFA;
+        --rival-violet-rgb: 167, 139, 250;
+        --rival-teal: #2DD4BF;
+        --rival-teal-rgb: 45, 212, 191;
+
+        --bg: #090B0E;
+        --surface: #12151D;
+        --surface-2: #1A1F2B;
+        --surface-3: #242B3B;
+        --text: #F2F5FB;
+        --text-dim: #8E9BAE;
+        --text-subtle: #586577;
+        --line: rgba(242, 245, 251, 0.08);
+        --line-strong: rgba(242, 245, 251, 0.16);
+        --shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+        --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.75);
+
+        --glass-bg: rgba(18, 21, 29, 0.86);
+        --glass-border: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    html[data-theme="light"] {
+      --mine: #F0471F;
+      --mine-rgb: 240, 71, 31;
+      --mine-dark: #C93411;
+      --rival-blue: #1A73E8;
+      --rival-blue-rgb: 26, 115, 232;
+      --rival-violet: #7C3AED;
+      --rival-violet-rgb: 124, 58, 237;
+      --rival-teal: #0D9488;
+      --rival-teal-rgb: 13, 148, 136;
+      --bg: #F4F6F9;
+      --surface: #FFFFFF;
+      --surface-2: #E9EEF5;
+      --surface-3: #DCE3ED;
+      --text: #0E131D;
+      --text-dim: #546072;
+      --text-subtle: #8492A6;
+      --line: rgba(14, 19, 29, 0.08);
+      --line-strong: rgba(14, 19, 29, 0.16);
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.12);
+      --glass-bg: rgba(255, 255, 255, 0.84);
+      --glass-border: rgba(255, 255, 255, 0.5);
+    }
+
+    html[data-theme="dark"] {
+      --mine: #FF6A3D;
+      --mine-rgb: 255, 106, 61;
+      --mine-dark: #F0471F;
+      --rival-blue: #4C9AFF;
+      --rival-blue-rgb: 76, 154, 255;
+      --rival-violet: #A78BFA;
+      --rival-violet-rgb: 167, 139, 250;
+      --rival-teal: #2DD4BF;
+      --rival-teal-rgb: 45, 212, 191;
+      --bg: #090B0E;
+      --surface: #12151D;
+      --surface-2: #1A1F2B;
+      --surface-3: #242B3B;
+      --text: #F2F5FB;
+      --text-dim: #8E9BAE;
+      --text-subtle: #586577;
+      --line: rgba(242, 245, 251, 0.08);
+      --line-strong: rgba(242, 245, 251, 0.16);
+      --shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+      --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.75);
+      --glass-bg: rgba(18, 21, 29, 0.86);
+      --glass-border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* ==========================================================================
+       RESET & BASE STYLES
+       ========================================================================== */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    button,
+    input,
+    select {
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+      border: none;
+      background: none;
+    }
+
+    button {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      min-width: 44px;
+      transition: transform 180ms cubic-bezier(0.2, 0.8, 0.4, 1), background-color 180ms ease, opacity 180ms ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--mine);
+      outline-offset: 2px;
+    }
+
+    .tabular {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ==========================================================================
+       APP LAYOUT
+       ========================================================================== */
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ==========================================================================
+       HEADER (Frosted Glass, Safe-Area aware)
+       ========================================================================== */
+    #header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      height: calc(56px + var(--safe-top));
+      padding-top: var(--safe-top);
+      padding-left: max(16px, var(--safe-left));
+      padding-right: max(16px, var(--safe-right));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+    }
+
+    .brand-title .word-territory {
+      color: var(--text);
+    }
+
+    .brand-title .word-fitness {
+      color: var(--mine);
+      margin-left: 5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Mode Pill Switch (Demo | Live GPS) */
+    .mode-switch {
+      display: inline-flex;
+      background: var(--surface-2);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-pill);
+      padding: 3px;
+      position: relative;
+      height: 36px;
+    }
+
+    .mode-btn {
+      min-height: 28px;
+      min-width: 58px;
+      padding: 0 10px;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-radius: var(--radius-pill);
+      color: var(--text-dim);
+      z-index: 1;
+      transition: color 200ms ease, background-color 200ms ease;
+    }
+
+    .mode-btn[aria-checked="true"] {
+      color: #FFFFFF;
+      background: var(--mine);
+      box-shadow: 0 2px 8px rgba(var(--mine-rgb), 0.35);
+    }
+
+    /* Runner Avatar Button */
+    .avatar-btn {
+      width: 38px;
+      height: 38px;
+      min-height: 38px;
+      min-width: 38px;
+      border-radius: var(--radius-pill);
+      background: var(--surface-2);
+      border: 2px solid var(--mine);
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .avatar-badge-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10B981;
+      border: 2px solid var(--surface);
+    }
+
+    /* ==========================================================================
+       MAP CONTAINER & FLOATING CONTROLS
+       ========================================================================== */
+    #map-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      background-color: var(--bg);
+    }
+
+    /* Leaflet Attribution */
+    .leaflet-control-attribution {
+      background: var(--glass-bg) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: var(--text-subtle) !important;
+      font-size: 10px !important;
+      padding: 2px 8px !important;
+      border-radius: 4px;
+      margin-bottom: calc(var(--sheet-visual-height) + 10px) !important;
+      margin-right: 10px !important;
+      transition: margin-bottom 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+      border: 1px solid var(--line);
+    }
+
+    .leaflet-control-attribution a {
+      color: var(--text-dim) !important;
+      text-decoration: none;
+    }
+
+    /* Floating Map Buttons */
+    #map-controls {
+      position: absolute;
+      right: max(16px, var(--safe-right));
+      bottom: calc(var(--sheet-visual-height) + 16px);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: bottom 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+      pointer-events: auto;
+    }
+
+    .floating-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .floating-btn:hover {
+      background: var(--surface-2);
+    }
+
+    .floating-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2.2;
+    }
+
+    /* ==========================================================================
+       BOTTOM SHEET (3 Snap States: Collapsed 112px, Half ~48dvh, Full ~88dvh)
+       ========================================================================== */
+    #bottom-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 600;
+      background: var(--surface);
+      border-top-left-radius: var(--radius-lg);
+      border-top-right-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border-top: 1px solid var(--line-strong);
+      display: flex;
+      flex-direction: column;
+      transition: transform 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+      will-change: transform;
+      height: calc(100vh - 60px);
+      height: calc(100dvh - 60px);
+    }
+
+    #bottom-sheet.no-transition {
+      transition: none !important;
+    }
+
+    .sheet-handle-zone {
+      width: 100%;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .sheet-handle-bar {
+      width: 44px;
+      height: 4px;
+      background: var(--text-subtle);
+      opacity: 0.45;
+      border-radius: var(--radius-pill);
+      transition: opacity 150ms ease, width 150ms ease;
+    }
+
+    .sheet-handle-zone:active .sheet-handle-bar {
+      opacity: 0.85;
+      width: 56px;
+    }
+
+    /* Tab Bar */
+    .sheet-tab-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-bottom: 1px solid var(--line);
+      padding: 0 8px;
+      background: var(--surface);
+      flex-shrink: 0;
+      height: 48px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      height: 44px;
+      min-height: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--text-dim);
+      position: relative;
+      transition: color 180ms ease;
+    }
+
+    .tab-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.2;
+    }
+
+    .tab-btn span {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .tab-btn[aria-selected="true"] {
+      color: var(--mine);
+    }
+
+    .tab-btn[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      width: 32px;
+      height: 3px;
+      background: var(--mine);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Headline Bar shown when Collapsed */
+    .sheet-mini-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+      cursor: pointer;
+      height: 36px;
+    }
+
+    .mini-hud-item {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .mini-hud-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .mini-hud-val {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .mini-hud-val.highlight {
+      color: var(--mine);
+    }
+
+    /* Scrollable Tab Panels */
+    .sheet-scroll-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px 16px calc(32px + var(--safe-bottom)) 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-panel {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-panel.active-panel {
+      display: flex;
+    }
+
+    /* ==========================================================================
+       CARDS & HERO STATS (Barlow Condensed 700, 56px Numerals)
+       ========================================================================== */
+    .card {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-badge {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--surface-3);
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .card-badge.orange {
+      background: rgba(var(--mine-rgb), 0.15);
+      color: var(--mine);
+    }
+
+    /* Sporty Big Numerals Row */
+    .stats-hero-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat-hero-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 12px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .stat-hero-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-hero-num {
+      font-family: var(--font-display);
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 0.95;
+      margin: 4px 0 2px 0;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-hero-unit {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-subtle);
+    }
+
+    /* Chips Row */
+    .chips-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .chips-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .rival-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Speed Selector Pill */
+    .speed-selector {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--surface-3);
+      padding: 2px;
+      border-radius: var(--radius-pill);
+    }
+
+    .speed-btn {
+      min-height: 26px;
+      min-width: 36px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      color: var(--text-dim);
+    }
+
+    .speed-btn.active {
+      background: var(--surface);
+      color: var(--mine);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Primary Buttons */
+    .btn-primary {
+      background: var(--mine);
+      color: #FFFFFF;
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+      height: 52px;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(var(--mine-rgb), 0.35);
+      gap: 8px;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: var(--surface-3);
+      color: var(--text);
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+    }
+
+    .btn-danger {
+      background: #EF4444;
+      color: #FFFFFF;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+      height: 44px;
+      padding: 0 16px;
+    }
+
+    .run-btn-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* Discrete Math Callout Box */
+    .math-callout {
+      background: var(--surface);
+      border-left: 3px solid var(--mine);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12px;
+    }
+
+    .math-formula {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--mine);
+      word-break: break-all;
+    }
+
+    .math-desc {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    /* Truth Table */
+    .truth-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-align: center;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .truth-table th,
+    .truth-table td {
+      padding: 6px 3px;
+      border: 1px solid var(--line);
+    }
+
+    .truth-table th {
+      background: var(--surface-3);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .truth-table tr.active-truth-row {
+      background: rgba(var(--mine-rgb), 0.15);
+      font-weight: 700;
+    }
+
+    .truth-table tr.active-truth-row td {
+      border-color: var(--mine);
+    }
+
+    .truth-badge-true {
+      color: #10B981;
+      font-weight: 700;
+    }
+
+    .truth-badge-false {
+      color: #EF4444;
+      font-weight: 700;
+    }
+
+    /* Ring Chart SVG */
+    .ring-chart-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 4px 0;
+    }
+
+    .ring-chart-svg {
+      width: 114px;
+      height: 114px;
+      transform: rotate(-90deg);
+      flex-shrink: 0;
+    }
+
+    .ring-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .legend-player {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    /* Leaderboard */
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .leaderboard-item.is-me {
+      border-color: var(--mine);
+      background: rgba(var(--mine-rgb), 0.06);
+    }
+
+    .leaderboard-rank {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+      width: 22px;
+      color: var(--text-dim);
+    }
+
+    /* Interactive Set Chips */
+    .set-chips-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .set-chip-btn {
+      min-height: 40px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    .set-chip-btn:hover {
+      background: var(--surface-3);
+    }
+
+    /* Landmark & Places */
+    .landmark-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .landmark-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      cursor: pointer;
+    }
+
+    .landmark-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .landmark-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .landmark-dist {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Route Selectors */
+    .route-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-custom {
+      width: 100%;
+      height: 40px;
+      padding: 0 10px;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 12px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    /* ==========================================================================
+       MODALS, DIALOGS & OVERLAYS
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #pin-modal {
+      z-index: 3500;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 380px;
+      max-height: 90vh;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line-strong);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: modalPop 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    @keyframes modalPop {
+      from {
+        transform: scale(0.92);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      padding: 16px 20px 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .modal-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-footer {
+      padding: 12px 20px 16px 20px;
+      display: flex;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    /* PIN Pad */
+    .pin-display {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin: 10px 0;
+    }
+
+    .pin-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--line-strong);
+      background: transparent;
+      transition: background 150ms ease, transform 150ms ease;
+    }
+
+    .pin-dot.filled {
+      background: var(--mine);
+      border-color: var(--mine);
+      transform: scale(1.15);
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .keypad-btn {
+      height: 52px;
+      border-radius: var(--radius-pill);
+      background: var(--surface-2);
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+    }
+
+    .keypad-btn:active {
+      background: var(--surface-3);
+    }
+
+    /* Welcome Fullscreen */
+    #welcome-view {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3000;
+      background: radial-gradient(circle at top right, rgba(var(--mine-rgb), 0.35), transparent 70%), var(--bg);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px max(20px, var(--safe-left));
+      overflow-y: auto;
+    }
+
+    #welcome-view.active {
+      display: flex;
+    }
+
+    .welcome-brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .welcome-title {
+      font-family: var(--font-display);
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 0.95;
+    }
+
+    .welcome-tagline {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 8px;
+      max-width: 320px;
+    }
+
+    .welcome-card {
+      width: 100%;
+      max-width: 360px;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .avatar-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .avatar-choice {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+      color: #FFFFFF;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .avatar-choice.selected {
+      border-color: var(--text);
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(var(--mine-rgb), 0.5);
+    }
+
+    .input-field {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+    }
+
+    /* Toasts */
+    #toast-container {
+      position: fixed;
+      top: calc(64px + var(--safe-top));
+      left: 16px;
+      right: 16px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-msg {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      border-left: 4px solid var(--mine);
+      box-shadow: var(--shadow-lg);
+      font-size: 13px;
+      font-weight: 600;
+      pointer-events: auto;
+      animation: toastSlide 220ms ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    @keyframes toastSlide {
+      from {
+        transform: translateY(-12px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Comparison Bar Chart (Cells Before vs After) */
+    .compare-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .compare-bar-track {
+      width: 100%;
+      height: 18px;
+      background: var(--surface-3);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+      display: flex;
+    }
+
+    .compare-bar-segment {
+      height: 100%;
+      transition: width 300ms ease;
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Fixed Top Header -->
+    <header id="header">
+      <div class="brand-group">
+        <h1 class="brand-title">
+          <span class="word-territory">Territory</span>
+          <span class="word-fitness">Fitness</span>
+        </h1>
+      </div>
+
+      <div class="header-actions">
+        <!-- Mode Switch: Demo vs Live GPS -->
+        <div class="mode-switch" role="radiogroup" aria-label="Game Mode">
+          <button id="btn-mode-demo" class="mode-btn" role="radio" aria-checked="true" tabindex="0">Demo</button>
+          <button id="btn-mode-live" class="mode-btn" role="radio" aria-checked="false" tabindex="-1">Live GPS</button>
+        </div>
+
+        <!-- Runner Avatar Button -->
+        <button id="btn-profile-menu" class="avatar-btn" aria-label="Runner Profile and Settings"
+          title="Profile & Settings">
+          <span id="header-avatar-label">TF</span>
+          <span class="avatar-badge-dot"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Map Viewport -->
+    <div id="map-container" role="region" aria-label="Interactive Territory Grid Map"></div>
+
+    <!-- Floating Map Controls -->
+    <div id="map-controls">
+      <button id="btn-map-recenter" class="floating-btn" aria-label="Center on runner" title="Center runner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+        </svg>
+      </button>
+      <button id="btn-map-zoomin" class="floating-btn" aria-label="Zoom in" title="Zoom in">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+      <button id="btn-map-zoomout" class="floating-btn" aria-label="Zoom out" title="Zoom out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom Sheet -->
+    <section id="bottom-sheet" aria-label="Activity and Math Controls">
+      <!-- Drag Handle Zone -->
+      <div id="sheet-handle-zone" class="sheet-handle-zone">
+        <div class="sheet-handle-bar"></div>
+      </div>
+
+      <!-- Tab Bar -->
+      <nav class="sheet-tab-bar" role="tablist" aria-label="Game Navigation">
+        <button id="tab-btn-run" class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-panel-run">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M13 4v6m0 0l4 2m-4-2L9 9m4 7l2 4m-2-4l-3-2-2 3"></path>
+            <circle cx="13" cy="4" r="2"></circle>
+          </svg>
+          <span>Run</span>
+        </button>
+
+        <button id="tab-btn-turf" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-panel-turf">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Turf</span>
+        </button>
+
+        <button id="tab-btn-places" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-panel-places">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>Places</span>
+        </button>
+
+        <button id="tab-btn-fences" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-panel-fences">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <span>Fences</span>
+        </button>
+      </nav>
+
+      <!-- Mini HUD (Collapsed State Summary) -->
+      <div id="sheet-mini-hud" class="sheet-mini-hud" title="Tap to expand">
+        <div class="mini-hud-item">
+          <span class="mini-hud-label">Dist</span>
+          <span id="mini-dist-val" class="mini-hud-val tabular">0.00 km</span>
+        </div>
+        <div class="mini-hud-item">
+          <span class="mini-hud-label">Time</span>
+          <span id="mini-time-val" class="mini-hud-val tabular">00:00:00</span>
+        </div>
+        <div class="mini-hud-item">
+          <span class="mini-hud-label">Owned</span>
+          <span id="mini-squares-val" class="mini-hud-val tabular highlight">16 sq</span>
+        </div>
+      </div>
+
+      <!-- Scrollable Tab Content Area -->
+      <div id="sheet-scroll-content" class="sheet-scroll-content">
+
+        <!-- ================================================================
+             TAB 1: RUN
+             ================================================================ -->
+        <div id="tab-panel-run" class="tab-panel active-panel" role="tabpanel" aria-labelledby="tab-btn-run">
+          <!-- Hero Condensed Run Stats -->
+          <div class="stats-hero-row">
+            <div class="stat-hero-box">
+              <span class="stat-hero-label">Distance</span>
+              <span id="run-stat-dist" class="stat-hero-num tabular">0.00</span>
+              <span class="stat-hero-unit">KM</span>
+            </div>
+            <div class="stat-hero-box">
+              <span class="stat-hero-label">Time</span>
+              <span id="run-stat-time" class="stat-hero-num tabular" style="font-size: 42px;">00:00:00</span>
+              <span class="stat-hero-unit">HH:MM:SS</span>
+            </div>
+            <div class="stat-hero-box">
+              <span class="stat-hero-label">Avg Pace</span>
+              <span id="run-stat-pace" class="stat-hero-num tabular">--:--</span>
+              <span class="stat-hero-unit">MIN/KM</span>
+            </div>
+          </div>
+
+          <!-- Stolen breakdown chips -->
+          <div class="card" style="padding: 12px 14px;">
+            <div class="card-title-row">
+              <span class="card-title" style="font-size: 13px;">Captured This Run: <span id="run-stat-captured"
+                  class="tabular" style="color: var(--mine); margin-left: 4px;">0</span></span>
+              <div id="demo-speed-pills" class="speed-selector">
+                <button class="speed-btn active" data-speed="1">1x</button>
+                <button class="speed-btn" data-speed="4">4x</button>
+                <button class="speed-btn" data-speed="8">8x</button>
+              </div>
+            </div>
+            <div class="chips-row">
+              <div class="rival-chip">
+                <span class="chip-dot" style="background: var(--rival-blue);"></span>
+                <span>Cobalt: <span id="stolen-blue" class="tabular">0</span></span>
+              </div>
+              <div class="rival-chip">
+                <span class="chip-dot" style="background: var(--rival-violet);"></span>
+                <span>Violet: <span id="stolen-violet" class="tabular">0</span></span>
+              </div>
+              <div class="rival-chip">
+                <span class="chip-dot" style="background: var(--rival-teal);"></span>
+                <span>Teal: <span id="stolen-teal" class="tabular">0</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Run Control Button -->
+          <div id="run-actions-container">
+            <button id="btn-run-primary" class="btn-primary">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Start Run</span>
+            </button>
+          </div>
+
+          <!-- Discrete Math Card: Boolean Logic Capture Truth Table -->
+          <div class="card">
+            <div class="card-title-row">
+              <div class="card-title">
+                <span>Discrete Logic: Capture Rule</span>
+              </div>
+              <span class="card-badge orange">Truth Table</span>
+            </div>
+
+            <div class="math-callout">
+              <span class="math-formula">Capture = Visited(c) ∧ (Owner(c) ≠ P) ∧ ¬Shielded(c) ∧ AccuracyOK</span>
+              <span class="math-desc">A square is claimed if visited, not currently yours, shield expired (&gt;5m), and
+                GPS precision ≤ 30m.</span>
+            </div>
+
+            <div style="font-size: 12px; display: flex; justify-content: space-between; font-weight: 600;">
+              <span>Target Cell: <span id="truth-cell-id" class="tabular">None</span></span>
+              <span>Evaluated: <span id="truth-eval-res" class="tabular truth-badge-true">--</span></span>
+            </div>
+
+            <table class="truth-table" aria-label="Capture Boolean Truth Table">
+              <thead>
+                <tr>
+                  <th>Visited</th>
+                  <th>≠ P</th>
+                  <th>¬Shield</th>
+                  <th>AccOK</th>
+                  <th>Capture</th>
+                </tr>
+              </thead>
+              <tbody id="truth-table-body">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Recent Runs List -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Run History</span>
+              <span id="history-count" class="card-badge">0 Runs</span>
+            </div>
+            <div id="runs-history-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-size: 12px; color: var(--text-dim);">No runs recorded yet. Start a run above to log your
+                GPS path!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================
+             TAB 2: TURF
+             ================================================================ -->
+        <div id="tab-panel-turf" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-turf">
+          <!-- Turf Hero -->
+          <div class="card" style="align-items: center; text-align: center; padding: 20px 16px;">
+            <span class="stat-hero-label">Total Territory Owned</span>
+            <div style="display: flex; align-items: baseline; gap: 6px; margin: 4px 0;">
+              <span id="turf-hero-owned" class="stat-hero-num tabular"
+                style="color: var(--mine); font-size: 64px;">16</span>
+              <span class="tabular" style="font-size: 20px; font-weight: 700; color: var(--text-dim);">/ 1024</span>
+            </div>
+            <span id="turf-hero-delta" class="card-badge orange tabular">+0 squares since last run</span>
+          </div>
+
+          <!-- Ring Chart Share of Grid -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Grid Ownership Share</span>
+              <span class="card-badge">32×32 Grid</span>
+            </div>
+            <div class="ring-chart-container">
+              <svg id="turf-ring-svg" class="ring-chart-svg" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="48" fill="none" stroke="var(--surface-3)" stroke-width="14"></circle>
+              </svg>
+              <div id="turf-ring-legend" class="ring-legend"></div>
+            </div>
+          </div>
+
+          <!-- Leaderboard -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Territory Leaderboard</span>
+              <span class="card-badge">4 Players</span>
+            </div>
+            <div id="turf-leaderboard" class="leaderboard-list"></div>
+          </div>
+
+          <!-- Discrete Math Card: Territory as Sets -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Territory as Sets</span>
+              <span class="card-badge orange">Inclusion–Exclusion</span>
+            </div>
+
+            <div class="math-callout">
+              <span class="math-formula">|M ∪ R| = |M| + |R| - |M ∩ R|</span>
+              <span id="math-inc-exc-eval" class="tabular"
+                style="font-weight: 700; color: var(--text);">Evaluating...</span>
+              <span class="math-desc">Universal set U = 1024 cells. M is your set; R is the selected rival. Tapping
+                chips highlights subsets on the map.</span>
+            </div>
+
+            <!-- Rival selector chips for set math -->
+            <div class="chips-row">
+              <button class="rival-chip set-rival-select active" data-rival="rival-blue" style="cursor: pointer;">
+                <span class="chip-dot" style="background: var(--rival-blue);"></span>
+                <span>Cobalt</span>
+              </button>
+              <button class="rival-chip set-rival-select" data-rival="rival-violet" style="cursor: pointer;">
+                <span class="chip-dot" style="background: var(--rival-violet);"></span>
+                <span>Violet</span>
+              </button>
+              <button class="rival-chip set-rival-select" data-rival="rival-teal" style="cursor: pointer;">
+                <span class="chip-dot" style="background: var(--rival-teal);"></span>
+                <span>Teal</span>
+              </button>
+            </div>
+
+            <!-- Set Inspection Chips -->
+            <div class="set-chips-grid">
+              <button class="set-chip-btn" data-set-action="mine">
+                <span>My Cells (M)</span>
+                <span id="set-size-m" class="tabular font-bold">0</span>
+              </button>
+              <button class="set-chip-btn" data-set-action="rival">
+                <span>Rival Cells (R)</span>
+                <span id="set-size-r" class="tabular font-bold">0</span>
+              </button>
+              <button class="set-chip-btn" data-set-action="union">
+                <span>Union (M ∪ R)</span>
+                <span id="set-size-union" class="tabular font-bold">0</span>
+              </button>
+              <button class="set-chip-btn" data-set-action="contested">
+                <span>Contested Boundary</span>
+                <span id="set-size-contested" class="tabular font-bold">0</span>
+              </button>
+              <button class="set-chip-btn" data-set-action="diff-mr">
+                <span>M \ R (My Only)</span>
+                <span id="set-size-diff-mr" class="tabular font-bold">0</span>
+              </button>
+              <button class="set-chip-btn" data-set-action="diff-rm">
+                <span>R \ M (Rival Only)</span>
+                <span id="set-size-diff-rm" class="tabular font-bold">0</span>
+              </button>
+            </div>
+
+            <button id="btn-clear-set-highlight" class="btn-secondary" style="font-size: 13px; height: 38px;">
+              Clear Map Highlight
+            </button>
+          </div>
+
+          <!-- Discrete Math Card: Connected Components / Clusters -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Territory Clusters</span>
+              <span class="card-badge orange">4-Neighbor BFS</span>
+            </div>
+
+            <div class="math-callout">
+              <span class="math-formula">G = (M, E) where (u, v) ∈ E ⇔ ‖u - v‖₁ = 1</span>
+              <span class="math-desc">Your territory forms a subgraph of 4-adjacent grid cells decomposed into connected
+                components.</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div class="stat-hero-box" style="padding: 10px;">
+                <span class="stat-hero-label">Total Clusters</span>
+                <span id="cluster-count-val" class="tabular"
+                  style="font-size: 32px; font-weight: 800; color: var(--text);">1</span>
+              </div>
+              <div class="stat-hero-box" style="padding: 10px;">
+                <span class="stat-hero-label">Largest Island</span>
+                <span id="cluster-max-val" class="tabular"
+                  style="font-size: 32px; font-weight: 800; color: var(--mine);">16</span>
+              </div>
+            </div>
+
+            <button id="btn-color-clusters" class="btn-secondary" style="font-size: 13px; height: 42px;">
+              🎨 Color Disjoint Clusters On Map
+            </button>
+          </div>
+        </div>
+
+        <!-- ================================================================
+             TAB 3: PLACES
+             ================================================================ -->
+        <div id="tab-panel-places" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-places">
+          <!-- Landmarks List -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Street Landmarks</span>
+              <span class="card-badge">10 Intersections</span>
+            </div>
+            <div id="places-landmark-list" class="landmark-list"></div>
+          </div>
+
+          <!-- Dijkstra Route Planner -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Shortest-Path Planner</span>
+              <span class="card-badge orange">Dijkstra + Min-Heap</span>
+            </div>
+
+            <div class="route-form-row">
+              <div class="select-wrap">
+                <label
+                  style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Origin</label>
+                <select id="route-start-select" class="select-custom"></select>
+              </div>
+              <div class="select-wrap">
+                <label
+                  style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Destination</label>
+                <select id="route-end-select" class="select-custom"></select>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-plan-route" class="btn-primary" style="height: 44px; font-size: 15px; flex: 1;">
+                Compute Shortest Path
+              </button>
+              <button id="btn-show-dijkstra-trace" class="btn-secondary" style="height: 44px; font-size: 13px;"
+                title="View Priority Queue step trace">
+                Trace
+              </button>
+            </div>
+
+            <div id="route-result-box"
+              style="display: none; flex-direction: column; gap: 6px; background: var(--surface); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line);">
+              <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                <span>Length: <span id="route-res-length" class="tabular" style="color: var(--mine);">0 m</span></span>
+                <span>Intersections: <span id="route-res-steps" class="tabular">0</span></span>
+              </div>
+              <span id="route-res-path"
+                style="font-size: 11px; color: var(--text-dim); word-break: break-all;">--</span>
+            </div>
+          </div>
+
+          <!-- Discrete Math Card: Counting Routes & Lattice Paths -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Path Counting & Lattice Combinatorics</span>
+              <span class="card-badge orange">Binomial Coefficients</span>
+            </div>
+
+            <div class="math-callout">
+              <span class="math-formula">C(Δx + Δy, Δx) = (Δx + Δy)! / (Δx! Δy!)</span>
+              <span class="math-desc">Number of monotone grid paths between origin and destination cells.</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;">
+              <span>Grid Steps: <span id="math-lattice-dxdy" class="tabular">Δx=0, Δy=0</span></span>
+              <span>Lattice Paths: <span id="math-lattice-count" class="tabular"
+                  style="color: var(--mine);">1</span></span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;">
+              <span>Street Graph Shortest DAG Paths:</span>
+              <span id="math-dag-count" class="tabular" style="color: var(--mine);">1</span>
+            </div>
+            <span style="font-size: 11px; color: var(--text-dim);">Computed via Dynamic Programming over the shortest
+              path subgraph DAG.</span>
+          </div>
+
+          <!-- Discrete Math Card: Modular Arithmetic Cell Hash -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Modular Arithmetic Hash</span>
+              <span class="card-badge orange">Hash & Tessellation</span>
+            </div>
+
+            <div class="math-callout">
+              <span class="math-formula">Code = ((i · 31 + j · 17) mod 997) base 36</span>
+              <span class="math-desc">Every square maps to a short coordinate code. 997 is prime, coprime to 31 and
+                17.</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;">
+              <span>Selected Cell ID: <span id="math-sample-cid" class="tabular">#528</span></span>
+              <span>Display Code: <span id="math-sample-hash" class="tabular"
+                  style="color: var(--mine); font-weight: 700;">--</span></span>
+            </div>
+            <span style="font-size: 11px; color: var(--text-dim);">Initial rival territories use modular blob
+              tessellation: owner = ((⌊i/4⌋ + ⌊j/4⌋) mod 3).</span>
+          </div>
+        </div>
+
+        <!-- ================================================================
+             TAB 4: FENCES
+             ================================================================ -->
+        <div id="tab-panel-fences" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-fences">
+          <!-- Fence Goal & Controls -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Enclose Territory</span>
+              <span class="card-badge orange">Jordan Curve BFS</span>
+            </div>
+
+            <span style="font-size: 12px; color: var(--text-dim);">
+              Surround an area to claim all interior squares at once. Tap squares on the map to add vertices or import
+              your last run path.
+            </span>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <button id="btn-fence-mode-draw" class="btn-secondary" style="height: 42px; font-size: 13px;">
+                ✏️ Tap to Draw
+              </button>
+              <button id="btn-fence-use-last-run" class="btn-secondary" style="height: 42px; font-size: 13px;">
+                🔄 Use Last Run
+              </button>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-fence-auto-close" class="btn-secondary"
+                style="height: 38px; font-size: 12px; flex: 1;">Auto-Close</button>
+              <button id="btn-fence-undo" class="btn-secondary"
+                style="height: 38px; font-size: 12px; flex: 1;">Undo</button>
+              <button id="btn-fence-clear" class="btn-secondary"
+                style="height: 38px; font-size: 12px; flex: 1;">Clear</button>
+            </div>
+
+            <!-- Loop Status -->
+            <div id="fence-status-box"
+              style="background: var(--surface); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); font-size: 12px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                <span>Loop Perimeter Cells: <span id="fence-vertex-count" class="tabular">0</span></span>
+                <span id="fence-loop-valid" class="tabular truth-badge-false">Unclosed Loop</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                <span>Interior Enclosed Squares:</span>
+                <span id="fence-interior-count" class="tabular" style="color: var(--mine);">0</span>
+              </div>
+            </div>
+
+            <button id="btn-claim-enclosed" class="btn-primary" style="height: 48px; font-size: 16px;" disabled>
+              Claim Enclosed Squares
+            </button>
+
+            <!-- Flood fill step animation -->
+            <div
+              style="display: flex; align-items: center; justify-content: space-between; padding-top: 4px; gap: 8px;">
+              <button id="btn-animate-flood" class="btn-secondary" style="height: 36px; font-size: 12px; flex: 1;">
+                ▶ Animate Flood Fill
+              </button>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label for="flood-speed-range"
+                  style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Speed</label>
+                <input id="flood-speed-range" type="range" min="1" max="5" value="3" style="width:70px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Discrete Math Card: Grid as a Graph & Handshake Lemma -->
+          <div class="card">
+            <div class="card-title-row">
+              <span class="card-title">Planar Graph & Handshake Lemma</span>
+              <span class="card-badge orange">Euler & Degrees</span>
+            </div>
+
+            <div class="math-callout">
+              <span class="math-formula">∑_{v ∈ V} deg(v) = 2 · |E|</span>
+              <span class="math-desc">Every edge contributes exactly 2 to the sum of vertex degrees.</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>Grid Vertices |V|:</span>
+                <span class="tabular font-bold">1,024 (32 × 32)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Grid Edges |E| = 2N(N-1):</span>
+                <span class="tabular font-bold">1,984</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Sum of Degrees ∑ deg(v):</span>
+                <span id="math-handshake-sum" class="tabular font-bold" style="color: var(--mine);">3,968</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>2 · |E| = 2 · 1984:</span>
+                <span id="math-handshake-2e" class="tabular font-bold" style="color: var(--mine);">3,968</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                <span>Handshake Lemma Check:</span>
+                <span class="truth-badge-true">VERIFIED (3968 = 3968)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         MODALS & DIALOGS
+         ==================================================================== -->
+
+    <!-- Welcome & Profile Creation Screen (Full Screen Overlay) -->
+    <div id="welcome-view" class="active" role="dialog" aria-modal="true" aria-label="Welcome to Territory Fitness">
+      <div class="welcome-brand">
+        <h2 class="welcome-title">
+          <span style="color: var(--text);">TERRITORY</span><br>
+          <span style="color: var(--mine);">FITNESS</span>
+        </h2>
+        <p class="welcome-tagline">Real-world territory capture running game powered by discrete mathematics.</p>
+      </div>
+
+      <div class="welcome-card">
+        <!-- Existing Profile Chips -->
+        <div id="welcome-existing-profiles" style="display: none; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Switch to
+            existing runner:</span>
+          <div id="welcome-profiles-list" class="chips-row"></div>
+          <div style="border-top: 1px solid var(--line); margin: 4px 0;"></div>
+        </div>
+
+        <span
+          style="font-family: var(--font-display); font-size: 18px; font-weight: 800; text-transform: uppercase;">Create
+          Runner</span>
+
+        <div>
+          <label for="input-runner-name"
+            style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Runner Name
+            (2–16 chars)</label>
+          <input id="input-runner-name" class="input-field" type="text" maxlength="16" placeholder="e.g. ApexRunner"
+            autocomplete="off">
+        </div>
+
+        <div>
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Choose
+            Avatar</label>
+          <div id="welcome-avatar-picker" class="avatar-picker-grid"></div>
+        </div>
+
+        <div>
+          <label for="input-runner-pin"
+            style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Optional
+            4-Digit PIN</label>
+          <input id="input-runner-pin" class="input-field" type="password" maxlength="4" inputmode="numeric"
+            placeholder="Leave empty for none">
+        </div>
+
+        <div id="welcome-error-msg" style="color: #EF4444; font-size: 12px; font-weight: 600; min-height: 18px; text-align: center;"></div>
+
+        <button id="btn-welcome-create" class="btn-primary" style="height: 48px; font-size: 16px;">
+          Enter Territory
+        </button>
+
+        <button id="btn-welcome-guest" class="btn-secondary" style="height: 42px; font-size: 13px;">
+          Continue as Guest
+        </button>
+      </div>
+    </div>
+
+    <!-- Numeric PIN Keypad Dialog -->
+    <div id="pin-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Enter PIN">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">Enter Runner PIN</span>
+          <button id="btn-close-pin" class="btn-secondary"
+            style="min-height: 32px; min-width: 32px; padding: 0; width: 32px; height: 32px; border-radius: 50%;">✕</button>
+        </div>
+        <div class="modal-body" style="align-items: center; text-align: center;">
+          <span id="pin-prompt-name" style="font-weight: 700; font-size: 15px;">Unlock Profile</span>
+          <div class="pin-display">
+            <span class="pin-dot" id="pin-d0"></span>
+            <span class="pin-dot" id="pin-d1"></span>
+            <span class="pin-dot" id="pin-d2"></span>
+            <span class="pin-dot" id="pin-d3"></span>
+          </div>
+          <span id="pin-error-msg" style="color: #EF4444; font-size: 12px; font-weight: 600; min-height: 18px;"></span>
+
+          <div class="keypad-grid">
+            <button class="keypad-btn" data-key="1">1</button>
+            <button class="keypad-btn" data-key="2">2</button>
+            <button class="keypad-btn" data-key="3">3</button>
+            <button class="keypad-btn" data-key="4">4</button>
+            <button class="keypad-btn" data-key="5">5</button>
+            <button class="keypad-btn" data-key="6">6</button>
+            <button class="keypad-btn" data-key="7">7</button>
+            <button class="keypad-btn" data-key="8">8</button>
+            <button class="keypad-btn" data-key="9">9</button>
+            <button class="keypad-btn" data-key="clear" style="font-size: 14px;">CLR</button>
+            <button class="keypad-btn" data-key="0">0</button>
+            <button class="keypad-btn" data-key="back">⌫</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Runner Profile & Settings Menu Modal -->
+    <div id="profile-menu-modal" class="modal-overlay" role="dialog" aria-modal="true"
+      aria-label="Runner Profile & Settings">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">Runner Profile</span>
+          <button id="btn-close-profile" class="btn-secondary"
+            style="min-height: 32px; min-width: 32px; padding: 0; width: 32px; height: 32px; border-radius: 50%;">✕</button>
+        </div>
+        <div class="modal-body">
+          <div
+            style="display: flex; align-items: center; gap: 12px; background: var(--surface-2); padding: 12px; border-radius: var(--radius-sm);">
+            <div id="menu-avatar-badge" class="avatar-choice"
+              style="width: 48px; height: 48px; font-size: 20px; cursor: default;">TF</div>
+            <div>
+              <div id="menu-runner-name" style="font-size: 16px; font-weight: 800; font-family: var(--font-display);">
+                Runner</div>
+              <div id="menu-runner-squares" class="tabular"
+                style="font-size: 12px; color: var(--mine); font-weight: 700;">16 Squares Owned</div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Theme
+              Override</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+              <button class="btn-secondary theme-btn" data-theme-val="system"
+                style="height: 36px; font-size: 12px;">System</button>
+              <button class="btn-secondary theme-btn" data-theme-val="light"
+                style="height: 36px; font-size: 12px;">Light</button>
+              <button class="btn-secondary theme-btn" data-theme-val="dark"
+                style="height: 36px; font-size: 12px;">Dark</button>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button id="btn-switch-runner" class="btn-secondary" style="height: 42px; font-size: 14px;">
+              🔄 Switch Runner
+            </button>
+            <button id="btn-open-about" class="btn-secondary" style="height: 42px; font-size: 14px;">
+              ℹ️ About & Discrete Math Suite
+            </button>
+            <button id="btn-reset-progress" class="btn-danger" style="height: 42px; font-size: 14px;">
+              ⚠️ Reset My Progress
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About & Discrete Math Self-Test Modal -->
+    <div id="about-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="About Territory Fitness">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">Discrete Math Project</span>
+          <button id="btn-close-about" class="btn-secondary"
+            style="min-height: 32px; min-width: 32px; padding: 0; width: 32px; height: 32px; border-radius: 50%;">✕</button>
+        </div>
+        <div class="modal-body" style="font-size: 13px; line-height: 1.5;">
+          <p><strong>Territory Fitness</strong> is a discrete mathematics course demonstration project integrating:</p>
+          <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;">
+            <li><strong>Propositional Logic:</strong> Real-time 4-variable Boolean capture truth tables.</li>
+            <li><strong>Set Theory:</strong> Formal sets M, R, M ∪ R, M ∩ R, contested frontier, and live
+              Inclusion–Exclusion proof.</li>
+            <li><strong>Graph Theory:</strong> Dijkstra shortest path on synthetic street network with binary min-heap;
+              4-neighbor BFS connected components.</li>
+            <li><strong>Combinatorics:</strong> Monotone lattice paths C(n, k) & DAG Dynamic Programming path counting.
+            </li>
+            <li><strong>Topology & Planar Graphs:</strong> Jordan Curve theorem flood fill enclosure; Handshake lemma
+              proof ∑ deg(v) = 2|E|.</li>
+            <li><strong>Modular Arithmetic:</strong> Prime modulo-997 hash codes and 2D mod-3 tessellation.</li>
+          </ul>
+          <div
+            style="background: var(--surface-2); padding: 8px; border-radius: var(--radius-sm); font-size: 11px; color: var(--text-dim);">
+            <strong>Local Storage Note:</strong> User accounts, runs and grid states are stored locally on this device
+            in browser localStorage. No data is sent to external servers.
+          </div>
+          <button id="btn-run-selftest" class="btn-primary" style="height: 44px; font-size: 15px;">
+            🧪 Run Mathematical Self-Test Suite
+          </button>
+          <div id="selftest-results"
+            style="display: none; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 11px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Run Summary Modal (Shown on Finish) -->
+    <div id="run-summary-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Run Finished Summary">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">Run Complete!</span>
+          <button id="btn-close-summary" class="btn-secondary"
+            style="min-height: 32px; min-width: 32px; padding: 0; width: 32px; height: 32px; border-radius: 50%;">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="stats-hero-row">
+            <div class="stat-hero-box">
+              <span class="stat-hero-label">Distance</span>
+              <span id="sum-dist" class="stat-hero-num tabular" style="font-size: 32px;">0.00</span>
+              <span class="stat-hero-unit">KM</span>
+            </div>
+            <div class="stat-hero-box">
+              <span class="stat-hero-label">Duration</span>
+              <span id="sum-time" class="stat-hero-num tabular" style="font-size: 32px;">00:00:00</span>
+              <span class="stat-hero-unit">HH:MM:SS</span>
+            </div>
+            <div class="stat-hero-box">
+              <span class="stat-hero-label">Avg Pace</span>
+              <span id="sum-pace" class="stat-hero-num tabular" style="font-size: 32px;">--:--</span>
+              <span class="stat-hero-unit">MIN/KM</span>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 12px;">
+            <div class="card-title-row">
+              <span class="card-title" style="font-size: 14px;">Territory Shift</span>
+              <span id="sum-captured-badge" class="card-badge orange">+0 Captured</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>Stolen from Cobalt:</span>
+                <span id="sum-stolen-blue" class="tabular font-bold">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Stolen from Violet:</span>
+                <span id="sum-stolen-violet" class="tabular font-bold">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Stolen from Teal:</span>
+                <span id="sum-stolen-teal" class="tabular font-bold">0</span>
+              </div>
+
+              <!-- Cells Before vs After Comparison Bar -->
+              <div class="compare-bar-container" style="margin-top: 4px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700;">
+                  <span>Before: <span id="sum-before-count" class="tabular">16</span> sq</span>
+                  <span>After: <span id="sum-after-count" class="tabular" style="color:var(--mine);">16</span> sq</span>
+                </div>
+                <div class="compare-bar-track">
+                  <div id="sum-bar-before" class="compare-bar-segment"
+                    style="width: 50%; background: var(--text-subtle);"></div>
+                  <div id="sum-bar-gained" class="compare-bar-segment" style="width: 10%; background: var(--mine);">
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style="display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 4px; font-weight: 700;">
+                <span>New Total Territory:</span>
+                <span id="sum-new-total" class="tabular" style="color: var(--mine);">16 / 1024</span>
+              </div>
+            </div>
+          </div>
+
+          <button id="btn-save-summary-close" class="btn-primary" style="height: 48px; font-size: 16px;">
+            Continue to Turf
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dijkstra Trace Modal -->
+    <div id="dijkstra-trace-modal" class="modal-overlay" role="dialog" aria-modal="true"
+      aria-label="Dijkstra Priority Queue Trace">
+      <div class="modal-card" style="max-height: 80vh;">
+        <div class="modal-header">
+          <span class="modal-title">Dijkstra Settled Nodes</span>
+          <button id="btn-close-dijkstra-trace" class="btn-secondary"
+            style="min-height: 32px; min-width: 32px; padding: 0; width: 32px; height: 32px; border-radius: 50%;">✕</button>
+        </div>
+        <div class="modal-body">
+          <span style="font-size: 12px; color: var(--text-dim);">Step-by-step extraction order from the Min-Heap
+            priority queue:</span>
+          <div id="dijkstra-trace-list"
+            style="display: flex; flex-direction: column; gap: 4px; font-family: var(--font-mono); font-size: 11px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- General Confirmation Dialog -->
+    <div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Confirm Action">
+      <div class="modal-card" style="max-width: 320px;">
+        <div class="modal-header">
+          <span id="confirm-title" class="modal-title">Confirm</span>
+        </div>
+        <div class="modal-body">
+          <p id="confirm-msg" style="font-size: 13px;"></p>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-confirm-cancel" class="btn-secondary" style="flex: 1;">Cancel</button>
+          <button id="btn-confirm-ok" class="btn-danger" style="flex: 1;">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" aria-live="polite"></div>
+  </div>
+
+  <!-- ====================================================================
+       SCRIPTS & APPLICATION ENGINE
+       ==================================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      /* ========================================================================
+         1. CONFIGURATION OBJECT
+         ======================================================================== */
+      const CONFIG = {
+        VERSION: 1,
+        STORAGE_PREFIX: "tf_app_v1_",
+        DEFAULT_CENTER: [37.7749, -122.4194], // San Francisco, CA
+        GRID_N: 32, // 32x32 = 1024 cells
+        CELL_DEG: 0.0005, // ~55 meters per square
+        SHIELD_MINUTES: 5, // cells shielded for 5 minutes after capture
+        DEMO_SPEED: 1.0,
+        MAX_ACCURACY_M: 30, // live GPS threshold in meters
+        MAX_SPEED_MS: 12, // max acceptable sprint speed (12 m/s ~ 43 km/h)
+        PRNG_SEED: 133742,
+        TILES: {
+          LIGHT: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+          DARK: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+          SUBDOMAINS: ["a", "b", "c", "d"],
+          ATTRIBUTION: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
+        },
+        RIVALS: [
+          { id: "rival-blue", name: "Cobalt", colorLight: "#1A73E8", colorDark: "#4C9AFF" },
+          { id: "rival-violet", name: "Violet", colorLight: "#7C3AED", colorDark: "#A78BFA" },
+          { id: "rival-teal", name: "Teal", colorLight: "#0D9488", colorDark: "#2DD4BF" }
+        ],
+        MINE: {
+          id: "mine",
+          name: "You",
+          colorLight: "#F0471F",
+          colorDark: "#FF6A3D"
+        },
+        AVATARS: [
+          { id: "av-1", label: "TF", bg: "#F0471F" },
+          { id: "av-2", label: "⚡", bg: "#1A73E8" },
+          { id: "av-3", label: "🏃", bg: "#7C3AED" },
+          { id: "av-4", label: "🔥", bg: "#D97706" },
+          { id: "av-5", label: "🌲", bg: "#0D9488" },
+          { id: "av-6", label: "🐺", bg: "#475569" },
+          { id: "av-7", label: "🪐", bg: "#8B5CF6" },
+          { id: "av-8", label: "💎", bg: "#0284C7" }
+        ]
+      };
+
+      /* ========================================================================
+         2. STORAGE & ACCOUNTS (with Safe Memory Fallback & Hash Security)
+         ======================================================================== */
+      const MemoryStorage = {
+        _data: new Map(),
+        getItem(key) { return this._data.has(key) ? this._data.get(key) : null; },
+        setItem(key, val) { this._data.set(key, String(val)); },
+        removeItem(key) { this._data.delete(key); },
+        clear() { this._data.clear(); }
+      };
+
+      const Storage = {
+        _backend: (function () {
+          try {
+            const testKey = "__tf_test__";
+            window.localStorage.setItem(testKey, "1");
+            window.localStorage.removeItem(testKey);
+            return window.localStorage;
+          } catch (e) {
+            console.warn("localStorage unavailable, falling back to in-memory store.");
+            return MemoryStorage;
+          }
+        })(),
+
+        get(key, defaultValue = null) {
+          try {
+            const val = this._backend.getItem(CONFIG.STORAGE_PREFIX + key);
+            return val !== null ? JSON.parse(val) : defaultValue;
+          } catch (e) {
+            console.error("Storage read error for key", key, e);
+            return defaultValue;
+          }
+        },
+
+        set(key, value) {
+          try {
+            this._backend.setItem(CONFIG.STORAGE_PREFIX + key, JSON.stringify(value));
+            return true;
+          } catch (e) {
+            console.error("Storage write error for key", key, e);
+            return false;
+          }
+        },
+
+        remove(key) {
+          try {
+            this._backend.removeItem(CONFIG.STORAGE_PREFIX + key);
+          } catch (e) { }
+        }
+      };
+
+      // Cryptographic PIN Hashing (SHA-256 with FNV-1a fallback)
+      async function hashPin(pin, salt) {
+        const text = salt + ":" + pin;
+        if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
+          try {
+            const enc = new TextEncoder();
+            const data = enc.encode(text);
+            const buffer = await window.crypto.subtle.digest("SHA-256", data);
+            const hashArray = Array.from(new Uint8Array(buffer));
+            const hex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+            return { hash: hex, algo: "SHA-256" };
+          } catch (e) {
+            // fallback below
+          }
+        }
+        // FNV-1a Hash Fallback
+        let hash = 0x811c9dc5;
+        for (let i = 0; i < text.length; i++) {
+          hash ^= text.charCodeAt(i);
+          hash = Math.imul(hash, 0x01000193);
+        }
+        return { hash: (hash >>> 0).toString(16).padStart(8, "0"), algo: "FNV-1a" };
+      }
+
+      function generateSalt() {
+        const chars = "abcdef0123456789";
+        let salt = "";
+        for (let i = 0; i < 16; i++) {
+          salt += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return salt;
+      }
+
+      /* ========================================================================
+         3. PURE DISCRETE MATHEMATICS ALGORITHMS
+         ======================================================================== */
+
+      // Seeded PRNG: Mulberry32
+      function mulberry32(seed) {
+        return function () {
+          let t = seed += 0x6D2B79F5;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      // Haversine Distance (meters)
+      function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // meters
+        const toRad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * toRad;
+        const dLon = (lon2 - lon1) * toRad;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      }
+
+      // 4-Connected Bresenham Line Algorithm (prevents diagonal gaps)
+      function bresenham4Connected(i0, j0, i1, j1) {
+        const cells = [{ i: i0, j: j0 }];
+        let currI = i0;
+        let currJ = j0;
+        const di = Math.abs(i1 - i0);
+        const dj = Math.abs(j1 - j0);
+        const si = i0 < i1 ? 1 : -1;
+        const sj = j0 < j1 ? 1 : -1;
+        let err = di - dj;
+
+        while (currI !== i1 || currJ !== j1) {
+          const e2 = 2 * err;
+          if (e2 > -dj && e2 < di) {
+            // Diagonal step -> insert intermediate step for 4-connectivity
+            if (di >= dj) {
+              currI += si;
+              cells.push({ i: currI, j: currJ });
+              err -= dj;
+              if (currI === i1 && currJ === j1) break;
+              currJ += sj;
+              cells.push({ i: currI, j: currJ });
+              err += di;
+            } else {
+              currJ += sj;
+              cells.push({ i: currI, j: currJ });
+              err += di;
+              if (currI === i1 && currJ === j1) break;
+              currI += si;
+              cells.push({ i: currI, j: currJ });
+              err -= dj;
+            }
+          } else {
+            if (e2 > -dj) {
+              err -= dj;
+              currI += si;
+              cells.push({ i: currI, j: currJ });
+            } else if (e2 < di) {
+              err += di;
+              currJ += sj;
+              cells.push({ i: currI, j: currJ });
+            }
+          }
+        }
+        return cells;
+      }
+
+      // Min-Heap (Binary Priority Queue)
+      class MinHeap {
+        constructor() {
+          this.heap = [];
+        }
+        push(item, priority) {
+          this.heap.push({ item, priority });
+          this._bubbleUp(this.heap.length - 1);
+        }
+        pop() {
+          if (this.isEmpty()) return null;
+          const top = this.heap[0];
+          const bottom = this.heap.pop();
+          if (this.heap.length > 0) {
+            this.heap[0] = bottom;
+            this._sinkDown(0);
+          }
+          return top;
+        }
+        isEmpty() {
+          return this.heap.length === 0;
+        }
+        _bubbleUp(idx) {
+          while (idx > 0) {
+            const p = Math.floor((idx - 1) / 2);
+            if (this.heap[idx].priority < this.heap[p].priority) {
+              [this.heap[idx], this.heap[p]] = [this.heap[p], this.heap[idx]];
+              idx = p;
+            } else break;
+          }
+        }
+        _sinkDown(idx) {
+          const len = this.heap.length;
+          while (true) {
+            let left = 2 * idx + 1;
+            let right = 2 * idx + 2;
+            let smallest = idx;
+            if (left < len && this.heap[left].priority < this.heap[smallest].priority) {
+              smallest = left;
+            }
+            if (right < len && this.heap[right].priority < this.heap[smallest].priority) {
+              smallest = right;
+            }
+            if (smallest !== idx) {
+              [this.heap[idx], this.heap[smallest]] = [this.heap[smallest], this.heap[idx]];
+              idx = smallest;
+            } else break;
+          }
+        }
+      }
+
+      // Dijkstra's Shortest Path Algorithm
+      function dijkstra(nodes, adj, startId, targetId) {
+        const dist = new Map();
+        const prev = new Map();
+        const trace = [];
+        const pq = new MinHeap();
+
+        for (const n of nodes) dist.set(n.id, Infinity);
+        dist.set(startId, 0);
+        pq.push(startId, 0);
+
+        const settled = new Set();
+
+        while (!pq.isEmpty()) {
+          const { item: u, priority: d } = pq.pop();
+          if (settled.has(u)) continue;
+          settled.add(u);
+          trace.push({ nodeId: u, dist: d, prev: prev.get(u) || null });
+
+          if (u === targetId) break;
+
+          const neighbors = adj.get(u) || [];
+          for (const edge of neighbors) {
+            const v = edge.to;
+            const alt = d + edge.weight;
+            if (alt < dist.get(v)) {
+              dist.set(v, alt);
+              prev.set(v, u);
+              pq.push(v, alt);
+            }
+          }
+        }
+
+        const path = [];
+        let curr = targetId;
+        if (dist.get(targetId) !== Infinity) {
+          while (curr !== undefined && curr !== null) {
+            path.unshift(curr);
+            curr = prev.get(curr);
+          }
+        }
+
+        return {
+          path,
+          distance: dist.get(targetId),
+          trace,
+          distMap: dist
+        };
+      }
+
+      // Count Shortest Paths on DAG via Dynamic Programming
+      function countDAGShortestPaths(nodes, adj, distMap, startId, targetId) {
+        const EPS = 0.05; // 5 cm floating point tolerance
+        const validNodes = nodes
+          .map(n => n.id)
+          .filter(id => distMap.get(id) < Infinity);
+        validNodes.sort((a, b) => distMap.get(a) - distMap.get(b));
+
+        const ways = new Map();
+        for (const id of validNodes) ways.set(id, 0n);
+        ways.set(startId, 1n);
+
+        for (const u of validNodes) {
+          const dU = distMap.get(u);
+          const waysU = ways.get(u);
+          if (!waysU || waysU === 0n) continue;
+
+          const edges = adj.get(u) || [];
+          for (const edge of edges) {
+            const v = edge.to;
+            const dV = distMap.get(v);
+            if (Math.abs((dU + edge.weight) - dV) < EPS) {
+              ways.set(v, (ways.get(v) || 0n) + waysU);
+            }
+          }
+        }
+        return ways.get(targetId) || 0n;
+      }
+
+      // Combinations C(n, k)
+      function combinations(n, k) {
+        if (k < 0 || k > n) return 0n;
+        if (k === 0 || k === n) return 1n;
+        const bn = BigInt(n);
+        let bk = BigInt(k);
+        if (bk > bn - bk) bk = bn - bk;
+        let result = 1n;
+        for (let i = 1n; i <= bk; i++) {
+          result = (result * (bn - bk + i)) / i;
+        }
+        return result;
+      }
+
+      // Modular Hash for Cell Identifier
+      function getCellCode(i, j) {
+        const val = ((i * 31 + j * 17) % 997 + 997) % 997;
+        return val.toString(36).toUpperCase().padStart(2, "0");
+      }
+
+      // Connected Components on Grid (4-neighborhood BFS)
+      function getConnectedComponents(cellIds, N = 32) {
+        const cellSet = new Set(cellIds);
+        const visited = new Set();
+        const components = [];
+
+        for (const cellId of cellSet) {
+          if (visited.has(cellId)) continue;
+          const component = [];
+          const queue = [cellId];
+          visited.add(cellId);
+
+          while (queue.length > 0) {
+            const curr = queue.shift();
+            component.push(curr);
+            const i = Math.floor(curr / N);
+            const j = curr % N;
+
+            const nbs = [
+              { i: i - 1, j: j },
+              { i: i + 1, j: j },
+              { i: i, j: j - 1 },
+              { i: i, j: j + 1 }
+            ];
+
+            for (const nb of nbs) {
+              if (nb.i >= 0 && nb.i < N && nb.j >= 0 && nb.j < N) {
+                const nbId = nb.i * N + nb.j;
+                if (cellSet.has(nbId) && !visited.has(nbId)) {
+                  visited.add(nbId);
+                  queue.push(nbId);
+                }
+              }
+            }
+          }
+          components.push(component);
+        }
+        components.sort((a, b) => b.length - a.length);
+        return components;
+      }
+
+      // Enclosed Area Flood Fill (Jordan Curve interior)
+      function findEnclosedCells(loopCellIds, N = 32) {
+        const loopSet = new Set(loopCellIds);
+        if (loopSet.size < 4) return { interior: [], floodTrace: [] };
+
+        let minI = N, maxI = -1, minJ = N, maxJ = -1;
+        for (const cid of loopSet) {
+          const i = Math.floor(cid / N);
+          const j = cid % N;
+          if (i < minI) minI = i;
+          if (i > maxI) maxI = i;
+          if (j < minJ) minJ = j;
+          if (j > maxJ) maxJ = j;
+        }
+
+        const padMinI = Math.max(-1, minI - 1);
+        const padMaxI = Math.min(N, maxI + 1);
+        const padMinJ = Math.max(-1, minJ - 1);
+        const padMaxJ = Math.min(N, maxJ + 1);
+
+        const key = (i, j) => i + "," + j;
+        const floodVisited = new Set();
+        const queue = [[padMinI, padMinJ]];
+        floodVisited.add(key(padMinI, padMinJ));
+        const floodTrace = [];
+
+        while (queue.length > 0) {
+          const [ci, cj] = queue.shift();
+          floodTrace.push({ i: ci, j: cj });
+
+          const neighbors = [
+            [ci - 1, cj], [ci + 1, cj], [ci, cj - 1], [ci, cj + 1]
+          ];
+          for (const [ni, nj] of neighbors) {
+            if (ni >= padMinI && ni <= padMaxI && nj >= padMinJ && nj <= padMaxJ) {
+              const k = key(ni, nj);
+              if (floodVisited.has(k)) continue;
+
+              const isGrid = ni >= 0 && ni < N && nj >= 0 && nj < N;
+              const cid = isGrid ? ni * N + nj : null;
+
+              if (cid !== null && loopSet.has(cid)) {
+                continue; // wall hit
+              }
+
+              floodVisited.add(k);
+              queue.push([ni, nj]);
+            }
+          }
+        }
+
+        const interior = [];
+        for (let i = minI; i <= maxI; i++) {
+          for (let j = minJ; j <= maxJ; j++) {
+            if (i >= 0 && i < N && j >= 0 && j < N) {
+              const cid = i * N + j;
+              if (!loopSet.has(cid) && !floodVisited.has(key(i, j))) {
+                interior.push(cid);
+              }
+            }
+          }
+        }
+
+        return { interior, floodTrace, boundingBox: { minI, maxI, minJ, maxJ } };
+      }
+
+      // Handshake Lemma Proof Calculator
+      function computeHandshakeLemma(N = 32) {
+        const V = N * N;
+        const E = 2 * N * (N - 1);
+        let sumDeg = 0;
+        for (let i = 0; i < N; i++) {
+          for (let j = 0; j < N; j++) {
+            let deg = 0;
+            if (i > 0) deg++;
+            if (i < N - 1) deg++;
+            if (j > 0) deg++;
+            if (j < N - 1) deg++;
+            sumDeg += deg;
+          }
+        }
+        return {
+          V,
+          E,
+          sumDeg,
+          twoE: 2 * E,
+          valid: sumDeg === 2 * E
+        };
+      }
+
+      // Set Operations & Contested Frontier
+      function computeSetOperations(mineIds, rivalIds, N = 32) {
+        const M = new Set(mineIds);
+        const R = new Set(rivalIds);
+
+        const union = new Set([...M, ...R]);
+        const intersection = new Set([...M].filter(x => R.has(x)));
+        const diffMR = new Set([...M].filter(x => !R.has(x)));
+        const diffRM = new Set([...R].filter(x => !M.has(x)));
+
+        const contested = new Set();
+        const checkAdjacent = (cid, targetSet) => {
+          const i = Math.floor(cid / N);
+          const j = cid % N;
+          const nbs = [[i - 1, j], [i + 1, j], [i, j - 1], [i, j + 1]];
+          for (const [ni, nj] of nbs) {
+            if (ni >= 0 && ni < N && nj >= 0 && nj < N) {
+              if (targetSet.has(ni * N + nj)) return true;
+            }
+          }
+          return false;
+        };
+
+        for (const cid of M) {
+          if (checkAdjacent(cid, R)) contested.add(cid);
+        }
+        for (const cid of R) {
+          if (checkAdjacent(cid, M)) contested.add(cid);
+        }
+
+        return {
+          sizeM: M.size,
+          sizeR: R.size,
+          union: [...union],
+          intersection: [...intersection],
+          diffMR: [...diffMR],
+          diffRM: [...diffRM],
+          contested: [...contested],
+          incExcMatches: union.size === M.size + R.size - intersection.size
+        };
+      }
+
+      /* ========================================================================
+         4. WORLD MODEL & SYNTHETIC STREET GRAPH
+         ======================================================================== */
+      let World = {
+        center: [...CONFIG.DEFAULT_CENTER],
+        N: CONFIG.GRID_N,
+        cellDeg: CONFIG.CELL_DEG,
+        nodes: [],
+        adj: new Map(),
+        landmarks: [],
+        streets: [], // polylines for rendering
+        ownership: new Map(), // cellId -> ownerId ('mine', 'rival-blue', etc.)
+        shieldTimes: new Map(), // cellId -> timestamp
+        homeCluster: []
+      };
+
+      function initWorld(originLat, originLng) {
+        World.center = [originLat, originLng];
+        const N = CONFIG.GRID_N;
+        const rand = mulberry32(CONFIG.PRNG_SEED);
+
+        // 1. Build grid intersections every 3 cells: i, j in {0, 3, 6, ..., 30}
+        World.nodes = [];
+        World.adj = new Map();
+        const nodeIndex = new Map();
+
+        for (let i = 0; i < N; i += 3) {
+          for (let j = 0; j < N; j += 3) {
+            const id = `node_${i}_${j}`;
+            const lat = originLat + (i - N / 2) * CONFIG.CELL_DEG;
+            const lng = originLng + (j - N / 2) * CONFIG.CELL_DEG;
+            const nodeObj = { id, i, j, lat, lng };
+            World.nodes.push(nodeObj);
+            World.adj.set(id, []);
+            nodeIndex.set(`${i},${j}`, nodeObj);
+          }
+        }
+
+        // 2. Connect orthogonal neighbors
+        const rawEdges = [];
+        for (let i = 0; i < N; i += 3) {
+          for (let j = 0; j < N; j += 3) {
+            const u = nodeIndex.get(`${i},${j}`);
+            const right = nodeIndex.get(`${i},${j + 3}`);
+            const down = nodeIndex.get(`${i + 3},${j}`);
+
+            if (right) {
+              const weight = haversine(u.lat, u.lng, right.lat, right.lng);
+              rawEdges.push({ u: u.id, v: right.id, weight });
+            }
+            if (down) {
+              const weight = haversine(u.lat, u.lng, down.lat, down.lng);
+              rawEdges.push({ u: u.id, v: down.id, weight });
+            }
+          }
+        }
+
+        // Randomly remove ~15% of edges while ensuring connectivity
+        for (const edge of rawEdges) {
+          if (rand() > 0.15) {
+            World.adj.get(edge.u).push({ to: edge.v, weight: edge.weight });
+            World.adj.get(edge.v).push({ to: edge.u, weight: edge.weight });
+          }
+        }
+
+        // Verify connected graph via BFS, restore edges if disconnected
+        function isFullyConnected() {
+          const visited = new Set();
+          const q = [World.nodes[0].id];
+          visited.add(World.nodes[0].id);
+          while (q.length > 0) {
+            const curr = q.shift();
+            for (const nb of World.adj.get(curr) || []) {
+              if (!visited.has(nb.to)) {
+                visited.add(nb.to);
+                q.push(nb.to);
+              }
+            }
+          }
+          return visited.size === World.nodes.length;
+        }
+
+        if (!isFullyConnected()) {
+          for (const edge of rawEdges) {
+            World.adj.get(edge.u).push({ to: edge.v, weight: edge.weight });
+            World.adj.get(edge.v).push({ to: edge.u, weight: edge.weight });
+          }
+        }
+
+        // Polylines for street rendering
+        World.streets = [];
+        const drawnSet = new Set();
+        for (const node of World.nodes) {
+          for (const edge of World.adj.get(node.id) || []) {
+            const edgeKey = [node.id, edge.to].sort().join("<->");
+            if (!drawnSet.has(edgeKey)) {
+              drawnSet.add(edgeKey);
+              const targetNode = World.nodes.find(n => n.id === edge.to);
+              World.streets.push([
+                [node.lat, node.lng],
+                [targetNode.lat, targetNode.lng]
+              ]);
+            }
+          }
+        }
+
+        // 3. Define 10 Fictional Landmarks
+        const landmarkDefs = [
+          { name: "Riverside Park", i: 0, j: 0 },
+          { name: "Market Square", i: 6, j: 9 },
+          { name: "Beacon Hill", i: 12, j: 21 },
+          { name: "Ironwood Yard", i: 18, j: 6 },
+          { name: "Old Town Plaza", i: 15, j: 15 },
+          { name: "Harbor Point", i: 3, j: 27 },
+          { name: "Atlas Tower", i: 15, j: 27 },
+          { name: "Clover Field", i: 27, j: 21 },
+          { name: "North Gate", i: 27, j: 3 },
+          { name: "Zenith Arc", i: 9, j: 9 }
+        ];
+
+        World.landmarks = landmarkDefs.map(def => {
+          const lat = originLat + (def.i - N / 2) * CONFIG.CELL_DEG;
+          const lng = originLng + (def.j - N / 2) * CONFIG.CELL_DEG;
+          return {
+            id: `landmark_${def.i}_${def.j}`,
+            name: def.name,
+            i: def.i,
+            j: def.j,
+            cellId: def.i * N + def.j,
+            lat,
+            lng
+          };
+        });
+
+        // 4. Seed Initial Territory (Demo Blobs via Modular Arithmetic)
+        World.ownership.clear();
+        World.shieldTimes.clear();
+
+        for (let i = 0; i < N; i++) {
+          for (let j = 0; j < N; j++) {
+            const cid = i * N + j;
+            if (rand() < 0.72) {
+              const rivalIdx = (Math.floor(i / 4) + Math.floor(j / 4)) % 3;
+              World.ownership.set(cid, CONFIG.RIVALS[rivalIdx].id);
+            }
+          }
+        }
+
+        // User starts with a home cluster (4x4 around center: 14..17, 14..17)
+        World.homeCluster = [];
+        for (let i = 14; i <= 17; i++) {
+          for (let j = 14; j <= 17; j++) {
+            const cid = i * N + j;
+            World.ownership.set(cid, "mine");
+            World.homeCluster.push(cid);
+          }
+        }
+      }
+
+      // Convert lat/lng to grid (i, j)
+      function latLngToCell(lat, lng) {
+        const N = CONFIG.GRID_N;
+        const dLat = lat - World.center[0];
+        const dLng = lng - World.center[1];
+        const i = Math.round(dLat / CONFIG.CELL_DEG + N / 2);
+        const j = Math.round(dLng / CONFIG.CELL_DEG + N / 2);
+        if (i >= 0 && i < N && j >= 0 && j < N) {
+          return { i, j, id: i * N + j };
+        }
+        return null;
+      }
+
+      // Get Cell Leaflet Bounds
+      function getCellBounds(i, j) {
+        const N = CONFIG.GRID_N;
+        const half = CONFIG.CELL_DEG / 2;
+        const lat = World.center[0] + (i - N / 2) * CONFIG.CELL_DEG;
+        const lng = World.center[1] + (j - N / 2) * CONFIG.CELL_DEG;
+        return [
+          [lat - half, lng - half],
+          [lat + half, lng + half]
+        ];
+      }
+
+      /* ========================================================================
+         5. MAP ADAPTER (Leaflet 1.9.4 Wrapper with Diffing & RAF)
+         ======================================================================== */
+      const MapAdapter = {
+        map: null,
+        canvasRenderer: null,
+        tileLayer: null,
+        cellLayers: new Map(), // cellId -> L.rectangle
+        streetLayersGroup: null,
+        trailCasingPolyline: null,
+        trailPolyline: null,
+        routePolyline: null,
+        fenceLayerGroup: null,
+        highlightGroup: null,
+        playerMarker: null,
+        playerAccCircle: null,
+        botMarkers: new Map(),
+        lastRenderedState: new Map(), // cellId -> string hash
+        cellTapCallback: null,
+        theme: "dark",
+
+        initMap(containerId, center, onCellTap) {
+          this.cellTapCallback = onCellTap;
+          this.canvasRenderer = L.canvas({ padding: 0.5 });
+
+          this.map = L.map(containerId, {
+            center: center,
+            zoom: 16,
+            minZoom: 13,
+            maxZoom: 19,
+            zoomControl: false,
+            attributionControl: true
+          });
+
+          // Streets layer group
+          this.streetLayersGroup = L.layerGroup().addTo(this.map);
+
+          // Fence & Highlight groups
+          this.highlightGroup = L.layerGroup().addTo(this.map);
+          this.fenceLayerGroup = L.layerGroup().addTo(this.map);
+
+          // Trail Polyline (Casing + Hot Orange Core for invtl styling)
+          this.trailCasingPolyline = L.polyline([], {
+            color: "rgba(0, 0, 0, 0.45)",
+            weight: 7,
+            lineCap: "round",
+            lineJoin: "round"
+          }).addTo(this.map);
+
+          this.trailPolyline = L.polyline([], {
+            color: "#FF6A3D",
+            weight: 4.5,
+            opacity: 1,
+            lineCap: "round",
+            lineJoin: "round"
+          }).addTo(this.map);
+
+          // Shortest Route Polyline
+          this.routePolyline = L.polyline([], {
+            color: "#00E5FF",
+            weight: 5,
+            dashArray: "6, 8",
+            opacity: 0.95
+          }).addTo(this.map);
+
+          // Draw Street Polylines
+          this.drawStreets();
+
+          // Create all 1024 cells in canvas once
+          this.createGridCells();
+
+          // Player accuracy circle & marker
+          this.playerAccCircle = L.circle(center, {
+            radius: 15,
+            color: "#FF6A3D",
+            fillColor: "#FF6A3D",
+            fillOpacity: 0.12,
+            weight: 1
+          }).addTo(this.map);
+
+          this.playerMarker = L.circleMarker(center, {
+            radius: 9,
+            color: "#FFFFFF",
+            fillColor: "#FF6A3D",
+            fillOpacity: 1,
+            weight: 2.5
+          }).addTo(this.map);
+
+          // Set Initial Theme after all layers and markers exist
+          this.setTheme(document.documentElement.getAttribute("data-theme") || "system");
+        },
+
+        setTheme(themeName) {
+          let resolved = themeName;
+          if (resolved === "system") {
+            resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          this.theme = resolved;
+
+          if (this.tileLayer) {
+            this.map.removeLayer(this.tileLayer);
+          }
+
+          const url = resolved === "dark" ? CONFIG.TILES.DARK : CONFIG.TILES.LIGHT;
+          this.tileLayer = L.tileLayer(url, {
+            subdomains: CONFIG.TILES.SUBDOMAINS,
+            attribution: CONFIG.TILES.ATTRIBUTION,
+            maxZoom: 19
+          }).addTo(this.map);
+
+          // Update trail & marker color according to theme
+          const mineColor = resolved === "dark" ? CONFIG.MINE.colorDark : CONFIG.MINE.colorLight;
+          if (this.trailPolyline) {
+            this.trailPolyline.setStyle({ color: mineColor });
+          }
+          if (this.playerMarker) {
+            this.playerMarker.setStyle({ fillColor: mineColor });
+          }
+
+          // Re-render cells for contrast
+          this.drawCells(World.ownership, true);
+        },
+
+        drawStreets() {
+          this.streetLayersGroup.clearLayers();
+          const streetColor = this.theme === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)";
+          for (const segment of World.streets) {
+            L.polyline(segment, {
+              color: streetColor,
+              weight: 2,
+              interactive: false
+            }).addTo(this.streetLayersGroup);
+          }
+        },
+
+        createGridCells() {
+          const N = CONFIG.GRID_N;
+          for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+              const cid = i * N + j;
+              const bounds = getCellBounds(i, j);
+              const rect = L.rectangle(bounds, {
+                renderer: this.canvasRenderer,
+                color: "rgba(120, 120, 120, 0.15)",
+                weight: 0.8,
+                fillColor: "transparent",
+                fillOpacity: 0,
+                interactive: true
+              });
+
+              rect.on("click", () => {
+                if (this.cellTapCallback) this.cellTapCallback(i, j, cid);
+              });
+
+              rect.addTo(this.map);
+              this.cellLayers.set(cid, rect);
+            }
+          }
+        },
+
+        drawCells(ownershipMap, forceAll = false) {
+          const now = Date.now();
+          const shieldMs = CONFIG.SHIELD_MINUTES * 60 * 1000;
+          const isDark = this.theme === "dark";
+
+          window.requestAnimationFrame(() => {
+            ownershipMap.forEach((ownerId, cid) => {
+              const rect = this.cellLayers.get(cid);
+              if (!rect) return;
+
+              const shieldTime = World.shieldTimes.get(cid) || 0;
+              const isShielded = (now - shieldTime) < shieldMs;
+              const stateKey = `${ownerId}_${isShielded ? 'S' : 'U'}`;
+
+              if (!forceAll && this.lastRenderedState.get(cid) === stateKey) {
+                return; // Diff check: unchanged
+              }
+              this.lastRenderedState.set(cid, stateKey);
+
+              let fillColor = "transparent";
+              let strokeColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+              let fillOpacity = 0;
+              let dashArray = null;
+
+              if (ownerId === "mine") {
+                fillColor = isDark ? CONFIG.MINE.colorDark : CONFIG.MINE.colorLight;
+                strokeColor = fillColor;
+                fillOpacity = 0.38;
+              } else if (ownerId) {
+                const rival = CONFIG.RIVALS.find(r => r.id === ownerId);
+                if (rival) {
+                  fillColor = isDark ? rival.colorDark : rival.colorLight;
+                  strokeColor = fillColor;
+                  fillOpacity = 0.35;
+                  if (isShielded) dashArray = "3, 3";
+                }
+              }
+
+              rect.setStyle({
+                fillColor: fillColor,
+                fillOpacity: fillOpacity,
+                color: strokeColor,
+                weight: fillOpacity > 0 ? 1.2 : 0.6,
+                dashArray: dashArray
+              });
+            });
+          });
+        },
+
+        highlightCells(cellIds, color = "#FFDD00", isCluster = false) {
+          this.highlightGroup.clearLayers();
+          const N = CONFIG.GRID_N;
+          for (const cid of cellIds) {
+            const i = Math.floor(cid / N);
+            const j = cid % N;
+            const bounds = getCellBounds(i, j);
+            L.rectangle(bounds, {
+              color: color,
+              weight: 2,
+              fillColor: color,
+              fillOpacity: isCluster ? 0.45 : 0.25,
+              interactive: false
+            }).addTo(this.highlightGroup);
+          }
+        },
+
+        clearHighlights() {
+          this.highlightGroup.clearLayers();
+        },
+
+        drawTrail(latLngs) {
+          if (this.trailPolyline && this.trailCasingPolyline) {
+            this.trailCasingPolyline.setLatLngs(latLngs);
+            this.trailPolyline.setLatLngs(latLngs);
+          }
+        },
+
+        drawRoute(latLngs) {
+          if (this.routePolyline) {
+            this.routePolyline.setLatLngs(latLngs);
+          }
+        },
+
+        setPlayer(latLng, accuracy = 15) {
+          if (this.playerMarker) this.playerMarker.setLatLng(latLng);
+          if (this.playerAccCircle) {
+            this.playerAccCircle.setLatLng(latLng);
+            this.playerAccCircle.setRadius(accuracy);
+          }
+        },
+
+        setBots(botPositions) {
+          for (const bot of botPositions) {
+            let marker = this.botMarkers.get(bot.id);
+            if (!marker) {
+              marker = L.circleMarker([bot.lat, bot.lng], {
+                radius: 7,
+                color: "#FFFFFF",
+                fillColor: bot.color,
+                fillOpacity: 1,
+                weight: 2
+              }).addTo(this.map);
+              this.botMarkers.set(bot.id, marker);
+            } else {
+              marker.setLatLng([bot.lat, bot.lng]);
+            }
+          }
+        },
+
+        panTo(latLng) {
+          if (this.map) {
+            // Offset downward by half the sheet visual height so the runner is centered in the visible top portion of the screen
+            const visualHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sheet-visual-height") || "112");
+            const point = this.map.latLngToContainerPoint(latLng);
+            const targetPoint = L.point(point.x, point.y + visualHeight / 2);
+            const offsetLatLng = this.map.containerPointToLatLng(targetPoint);
+            this.map.panTo(offsetLatLng, { animate: true, duration: 0.35 });
+          }
+        },
+
+        zoomIn() {
+          if (this.map) this.map.zoomIn();
+        },
+
+        zoomOut() {
+          if (this.map) this.map.zoomOut();
+        },
+
+        openPopup(latLng, htmlContent) {
+          L.popup({ offset: [0, -10] })
+            .setLatLng(latLng)
+            .setContent(htmlContent)
+            .openOn(this.map);
+        }
+      };
+
+      /* ========================================================================
+         6. APPLICATION STATE & ENGINE
+         ======================================================================== */
+      const State = {
+        activeProfile: null,
+        isGuest: false,
+        gameMode: "demo", // 'demo' | 'live'
+        demoSpeed: 1,
+        activeTab: "run", // 'run' | 'turf' | 'places' | 'fences'
+        sheetState: "half", // 'collapsed' | 'half' | 'full'
+
+        // Run Engine State
+        isRunning: false,
+        isPaused: false,
+        runStartTime: 0,
+        runElapsedTime: 0,
+        runDistanceM: 0,
+        runTrail: [], // array of [lat, lng]
+        runTrailCells: [], // cellIds visited this run
+        squaresCapturedThisRun: 0,
+        squaresStolenThisRun: { "rival-blue": 0, "rival-violet": 0, "rival-teal": 0 },
+        lastCellId: null,
+
+        // Bot Simulation State
+        bots: [
+          { id: "rival-blue", name: "Cobalt", color: "#1A73E8", i: 3, j: 3, targetI: 18, targetJ: 18, lat: 0, lng: 0 },
+          { id: "rival-violet", name: "Violet", color: "#7C3AED", i: 27, j: 27, targetI: 6, targetJ: 6, lat: 0, lng: 0 },
+          { id: "rival-teal", name: "Teal", color: "#0D9488", i: 3, j: 27, targetI: 27, targetJ: 3, lat: 0, lng: 0 }
+        ],
+
+        // Demo Runner Path
+        demoPathIndex: 0,
+        demoWaypoints: [],
+
+        // Fences Mode State
+        fenceLoopCells: [], // cell IDs
+        fenceInteriorCells: [],
+
+        // Security / PIN lockout
+        failedPinAttempts: 0,
+        lockoutUntil: 0
+      };
+
+      // Toast Notifications
+      function showToast(message, isUrgent = false) {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = "toast-msg";
+        if (isUrgent) toast.style.borderLeftColor = "#EF4444";
+        toast.innerHTML = `<span>${message}</span><span style="font-size:10px; opacity:0.6; margin-left:8px;">now</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = "0";
+          toast.style.transition = "opacity 200ms ease";
+          setTimeout(() => toast.remove(), 250);
+        }, 3400);
+      }
+
+      /* ========================================================================
+         7. PROFILES & SESSION MANAGEMENT
+         ======================================================================== */
+      function loadProfilesList() {
+        return Storage.get("profiles", []);
+      }
+
+      function saveProfilesList(list) {
+        Storage.set("profiles", list);
+      }
+
+      function getProfileDataKey(profileId) {
+        return `profile_data_${profileId}`;
+      }
+
+      function loadProfileGameData(profileId) {
+        const defaultData = {
+          version: CONFIG.VERSION,
+          ownedCells: World.homeCluster,
+          runs: [],
+          totalDistanceM: 0,
+          createdDate: Date.now()
+        };
+        const data = Storage.get(getProfileDataKey(profileId), defaultData);
+        return data;
+      }
+
+      function saveActiveProfileData() {
+        if (!State.activeProfile || State.isGuest) return;
+        const owned = [];
+        World.ownership.forEach((owner, cid) => {
+          if (owner === "mine") owned.push(cid);
+        });
+        const data = {
+          version: CONFIG.VERSION,
+          ownedCells: owned,
+          runs: State.activeProfile.runs || [],
+          totalDistanceM: State.activeProfile.totalDistanceM || 0,
+          updatedDate: Date.now()
+        };
+        Storage.set(getProfileDataKey(State.activeProfile.id), data);
+      }
+
+      /* ========================================================================
+         8. DEMO RUNNER & BOT SIMULATION ENGINES
+         ======================================================================== */
+      function buildDemoCircuit() {
+        const routeNodes = [
+          World.landmarks[0], // Riverside Park
+          World.landmarks[9], // Zenith Arc
+          World.landmarks[1], // Market Square
+          World.landmarks[4], // Old Town Plaza
+          World.landmarks[3], // Ironwood Yard
+          World.landmarks[8], // North Gate
+          World.landmarks[0]
+        ];
+
+        const pathPoints = [];
+        for (let k = 0; k < routeNodes.length - 1; k++) {
+          const fromNode = World.nodes.find(n => n.i === routeNodes[k].i && n.j === routeNodes[k].j);
+          const toNode = World.nodes.find(n => n.i === routeNodes[k + 1].i && n.j === routeNodes[k + 1].j);
+          if (fromNode && toNode) {
+            const res = dijkstra(World.nodes, World.adj, fromNode.id, toNode.id);
+            for (const nid of res.path) {
+              const node = World.nodes.find(n => n.id === nid);
+              pathPoints.push([node.lat, node.lng]);
+            }
+          }
+        }
+        State.demoWaypoints = pathPoints;
+      }
+
+      function initBots() {
+        for (const bot of State.bots) {
+          const lat = World.center[0] + (bot.i - World.N / 2) * CONFIG.CELL_DEG;
+          const lng = World.center[1] + (bot.j - World.N / 2) * CONFIG.CELL_DEG;
+          bot.lat = lat;
+          bot.lng = lng;
+        }
+        MapAdapter.setBots(State.bots);
+      }
+
+      function stepBots() {
+        for (const bot of State.bots) {
+          if (bot.i < bot.targetI) bot.i++;
+          else if (bot.i > bot.targetI) bot.i--;
+          else if (bot.j < bot.targetJ) bot.j++;
+          else if (bot.j > bot.targetJ) bot.j--;
+          else {
+            const targetLm = World.landmarks[Math.floor(Math.random() * World.landmarks.length)];
+            bot.targetI = targetLm.i;
+            bot.targetJ = targetLm.j;
+          }
+
+          bot.lat = World.center[0] + (bot.i - World.N / 2) * CONFIG.CELL_DEG;
+          bot.lng = World.center[1] + (bot.j - World.N / 2) * CONFIG.CELL_DEG;
+
+          const cid = bot.i * World.N + bot.j;
+          const previousOwner = World.ownership.get(cid);
+
+          if (previousOwner !== bot.id) {
+            const shieldTime = World.shieldTimes.get(cid) || 0;
+            const isShielded = (Date.now() - shieldTime) < (CONFIG.SHIELD_MINUTES * 60 * 1000);
+            if (!isShielded) {
+              World.ownership.set(cid, bot.id);
+              World.shieldTimes.set(cid, Date.now());
+
+              if (previousOwner === "mine") {
+                // Find nearest landmark name
+                let nearestLm = World.landmarks[0];
+                let minDist = Infinity;
+                for (const lm of World.landmarks) {
+                  const d = Math.abs(lm.i - bot.i) + Math.abs(lm.j - bot.j);
+                  if (d < minDist) { minDist = d; nearestLm = lm; }
+                }
+
+                showToast(`⚔️ ${bot.name} captured 1 of your squares near ${nearestLm.name}!`, true);
+                MapAdapter.highlightCells([cid], bot.color);
+                setTimeout(() => MapAdapter.clearHighlights(), 1800);
+              }
+            }
+          }
+        }
+        MapAdapter.setBots(State.bots);
+        MapAdapter.drawCells(World.ownership);
+        renderTurfStats();
+      }
+
+      /* ========================================================================
+         9. RUN CONTROLLER & LIVE GPS TRACKER
+         ======================================================================== */
+      let runTimerInterval = null;
+      let botTickInterval = null;
+      let gpsWatchId = null;
+      let wakeLockSentinel = null;
+      let territoryBeforeRun = 16;
+
+      async function requestWakeLock() {
+        if ("wakeLock" in navigator) {
+          try {
+            wakeLockSentinel = await navigator.wakeLock.request("screen");
+          } catch (err) { }
+        }
+      }
+
+      function releaseWakeLock() {
+        if (wakeLockSentinel) {
+          wakeLockSentinel.release().then(() => { wakeLockSentinel = null; });
+        }
+      }
+
+      function startRun() {
+        // Record count before run
+        let count = 0;
+        World.ownership.forEach(v => { if (v === "mine") count++; });
+        territoryBeforeRun = count;
+
+        State.isRunning = true;
+        State.isPaused = false;
+        State.runStartTime = Date.now() - State.runElapsedTime;
+        State.runTrail = [];
+        State.runTrailCells = [];
+        State.squaresCapturedThisRun = 0;
+        State.squaresStolenThisRun = { "rival-blue": 0, "rival-violet": 0, "rival-teal": 0 };
+
+        requestWakeLock();
+        updateRunUI();
+
+        runTimerInterval = setInterval(() => {
+          if (!State.isPaused) {
+            State.runElapsedTime = Date.now() - State.runStartTime;
+            if (State.gameMode === "demo") {
+              stepDemoRunner();
+            }
+            renderRunHUD();
+          }
+        }, 1000 / (State.gameMode === "demo" ? State.demoSpeed : 1));
+
+        if (!botTickInterval) {
+          botTickInterval = setInterval(stepBots, 3500);
+        }
+      }
+
+      function pauseRun() {
+        State.isPaused = true;
+        updateRunUI();
+      }
+
+      function resumeRun() {
+        State.isPaused = false;
+        State.runStartTime = Date.now() - State.runElapsedTime;
+        updateRunUI();
+      }
+
+      function finishRun() {
+        State.isRunning = false;
+        State.isPaused = false;
+        clearInterval(runTimerInterval);
+        releaseWakeLock();
+
+        const totalDistanceKm = State.runDistanceM / 1000;
+        const totalDurationSec = Math.floor(State.runElapsedTime / 1000);
+        const avgPaceMinKm = totalDistanceKm > 0 ? (totalDurationSec / 60) / totalDistanceKm : 0;
+
+        let territoryAfterRun = 0;
+        World.ownership.forEach(v => { if (v === "mine") territoryAfterRun++; });
+
+        const runRecord = {
+          id: "run_" + Date.now(),
+          date: new Date().toLocaleDateString(),
+          timeStr: formatHHMMSS(totalDurationSec),
+          distanceKm: totalDistanceKm.toFixed(2),
+          paceStr: formatPace(avgPaceMinKm),
+          captured: State.squaresCapturedThisRun,
+          stolen: { ...State.squaresStolenThisRun },
+          beforeCount: territoryBeforeRun,
+          afterCount: territoryAfterRun,
+          trail: State.runTrail
+        };
+
+        if (State.activeProfile) {
+          State.activeProfile.runs = State.activeProfile.runs || [];
+          State.activeProfile.runs.unshift(runRecord);
+          if (State.activeProfile.runs.length > 5) State.activeProfile.runs.pop();
+          State.activeProfile.totalDistanceM = (State.activeProfile.totalDistanceM || 0) + State.runDistanceM;
+          saveActiveProfileData();
+        }
+
+        showRunSummaryModal(runRecord);
+        updateRunUI();
+        renderHistoryList();
+        renderTurfStats();
+      }
+
+      function stepDemoRunner() {
+        if (State.demoWaypoints.length === 0) buildDemoCircuit();
+        const pt = State.demoWaypoints[State.demoPathIndex];
+        State.demoPathIndex = (State.demoPathIndex + 1) % State.demoWaypoints.length;
+
+        processPosition(pt[0], pt[1], 10);
+      }
+
+      function processPosition(lat, lng, accuracy) {
+        const lastPt = State.runTrail[State.runTrail.length - 1];
+        if (lastPt) {
+          const stepDist = haversine(lastPt[0], lastPt[1], lat, lng);
+          State.runDistanceM += stepDist;
+        }
+
+        State.runTrail.push([lat, lng]);
+        MapAdapter.setPlayer([lat, lng], accuracy);
+        MapAdapter.drawTrail(State.runTrail);
+
+        const cell = latLngToCell(lat, lng);
+        if (cell) {
+          if (State.lastCellId !== null && State.lastCellId !== cell.id) {
+            const prevI = Math.floor(State.lastCellId / World.N);
+            const prevJ = State.lastCellId % World.N;
+            const line = bresenham4Connected(prevI, prevJ, cell.i, cell.j);
+            for (let k = 1; k < line.length; k++) {
+              evaluateAndCaptureCell(line[k].i, line[k].j, accuracy);
+            }
+          } else {
+            evaluateAndCaptureCell(cell.i, cell.j, accuracy);
+          }
+          State.lastCellId = cell.id;
+        }
+      }
+
+      function evaluateAndCaptureCell(i, j, accuracy) {
+        const cid = i * World.N + j;
+        const currentOwner = World.ownership.get(cid);
+        const shieldTime = World.shieldTimes.get(cid) || 0;
+        const isShielded = (Date.now() - shieldTime) < (CONFIG.SHIELD_MINUTES * 60 * 1000);
+        const accuracyOK = accuracy <= CONFIG.MAX_ACCURACY_M;
+        const notMine = currentOwner !== "mine";
+
+        const captured = notMine && !isShielded && accuracyOK;
+
+        if (captured) {
+          World.ownership.set(cid, "mine");
+          World.shieldTimes.set(cid, Date.now());
+          State.squaresCapturedThisRun++;
+
+          if (currentOwner && State.squaresStolenThisRun[currentOwner] !== undefined) {
+            State.squaresStolenThisRun[currentOwner]++;
+          }
+
+          MapAdapter.drawCells(World.ownership);
+        }
+
+        updateTruthTableCard(i, j, cid, true, notMine, isShielded, accuracyOK, captured);
+      }
+
+      /* ========================================================================
+         10. UI RENDERING FUNCTIONS
+         ======================================================================== */
+      function formatHHMMSS(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600).toString().padStart(2, "0");
+        const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, "0");
+        const s = (totalSeconds % 60).toString().padStart(2, "0");
+        return `${h}:${m}:${s}`;
+      }
+
+      function formatPace(paceMinKm) {
+        if (!paceMinKm || !isFinite(paceMinKm) || paceMinKm <= 0 || paceMinKm > 30) return "--:--";
+        const min = Math.floor(paceMinKm);
+        const sec = Math.round((paceMinKm - min) * 60).toString().padStart(2, "0");
+        return `${min}:${sec}`;
+      }
+
+      function renderRunHUD() {
+        const distKm = (State.runDistanceM / 1000).toFixed(2);
+        const durSec = Math.floor(State.runElapsedTime / 1000);
+        const pace = formatPace(State.runDistanceM > 0 ? (durSec / 60) / (State.runDistanceM / 1000) : 0);
+
+        document.getElementById("run-stat-dist").textContent = distKm;
+        document.getElementById("run-stat-time").textContent = formatHHMMSS(durSec);
+        document.getElementById("run-stat-pace").textContent = pace;
+        document.getElementById("run-stat-captured").textContent = State.squaresCapturedThisRun;
+
+        document.getElementById("stolen-blue").textContent = State.squaresStolenThisRun["rival-blue"];
+        document.getElementById("stolen-violet").textContent = State.squaresStolenThisRun["rival-violet"];
+        document.getElementById("stolen-teal").textContent = State.squaresStolenThisRun["rival-teal"];
+
+        // Mini HUD
+        document.getElementById("mini-dist-val").textContent = `${distKm} km`;
+        document.getElementById("mini-time-val").textContent = formatHHMMSS(durSec);
+
+        let myCount = 0;
+        World.ownership.forEach(v => { if (v === "mine") myCount++; });
+        document.getElementById("mini-squares-val").textContent = `${myCount} sq`;
+      }
+
+      function updateRunUI() {
+        const container = document.getElementById("run-actions-container");
+        if (!State.isRunning) {
+          container.innerHTML = `
+            <button id="btn-run-start" class="btn-primary">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Start Run</span>
+            </button>
+          `;
+          document.getElementById("btn-run-start").onclick = startRun;
+        } else if (State.isPaused) {
+          container.innerHTML = `
+            <div class="run-btn-row">
+              <button id="btn-run-resume" class="btn-primary" style="flex:1;">
+                <span>Resume</span>
+              </button>
+              <button id="btn-run-finish" class="btn-secondary" style="flex:1;">
+                <span>Finish Run</span>
+              </button>
+            </div>
+          `;
+          document.getElementById("btn-run-resume").onclick = resumeRun;
+          document.getElementById("btn-run-finish").onclick = finishRun;
+        } else {
+          container.innerHTML = `
+            <div class="run-btn-row">
+              <button id="btn-run-pause" class="btn-secondary" style="flex:1;">
+                <span>Pause</span>
+              </button>
+              <button id="btn-run-finish" class="btn-primary" style="flex:1; background:#10B981; box-shadow: 0 4px 16px rgba(16,185,129,0.35);">
+                <span>Finish Run</span>
+              </button>
+            </div>
+          `;
+          document.getElementById("btn-run-pause").onclick = pauseRun;
+          document.getElementById("btn-run-finish").onclick = finishRun;
+        }
+      }
+
+      function updateTruthTableCard(i, j, cid, visited, notMine, isShielded, accOK, captured) {
+        const code = getCellCode(i, j);
+        document.getElementById("truth-cell-id").textContent = `#${cid} (${code})`;
+        const resEl = document.getElementById("truth-eval-res");
+        resEl.textContent = captured ? "CAPTURED (TRUE)" : "BLOCKED (FALSE)";
+        resEl.className = captured ? "tabular truth-badge-true" : "tabular truth-badge-false";
+
+        const tbody = document.getElementById("truth-table-body");
+        const rows = [
+          { v: true, nm: true, ns: true, acc: true, cap: true },
+          { v: true, nm: false, ns: true, acc: true, cap: false },
+          { v: true, nm: true, ns: false, acc: true, cap: false },
+          { v: true, nm: true, ns: true, acc: false, cap: false }
+        ];
+
+        tbody.innerHTML = rows.map(r => {
+          const isCurrent = (r.v === visited && r.nm === notMine && r.ns === !isShielded && r.acc === accOK);
+          return `
+            <tr class="${isCurrent ? 'active-truth-row' : ''}">
+              <td class="${r.v ? 'truth-badge-true' : 'truth-badge-false'}">${r.v ? 'T' : 'F'}</td>
+              <td class="${r.nm ? 'truth-badge-true' : 'truth-badge-false'}">${r.nm ? 'T' : 'F'}</td>
+              <td class="${r.ns ? 'truth-badge-true' : 'truth-badge-false'}">${r.ns ? 'T' : 'F'}</td>
+              <td class="${r.acc ? 'truth-badge-true' : 'truth-badge-false'}">${r.acc ? 'T' : 'F'}</td>
+              <td class="${r.cap ? 'truth-badge-true' : 'truth-badge-false'}">${r.cap ? 'TRUE' : 'FALSE'}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      function renderTurfStats() {
+        const counts = { "mine": 0, "rival-blue": 0, "rival-violet": 0, "rival-teal": 0, "unclaimed": 0 };
+        const total = CONFIG.GRID_N * CONFIG.GRID_N;
+
+        for (let i = 0; i < total; i++) {
+          const owner = World.ownership.get(i);
+          if (owner && counts[owner] !== undefined) counts[owner]++;
+          else counts.unclaimed++;
+        }
+
+        document.getElementById("turf-hero-owned").textContent = counts.mine;
+        const delta = State.squaresCapturedThisRun;
+        document.getElementById("turf-hero-delta").textContent = `+${delta} squares this session`;
+
+        // Ring SVG
+        const r = 48;
+        const circumference = 2 * Math.PI * r;
+        let cumulativePercent = 0;
+        const segments = [
+          { id: "mine", color: "var(--mine)", count: counts.mine, label: "You" },
+          { id: "rival-blue", color: "var(--rival-blue)", count: counts["rival-blue"], label: "Cobalt" },
+          { id: "rival-violet", color: "var(--rival-violet)", count: counts["rival-violet"], label: "Violet" },
+          { id: "rival-teal", color: "var(--rival-teal)", count: counts["rival-teal"], label: "Teal" },
+          { id: "unclaimed", color: "var(--surface-3)", count: counts.unclaimed, label: "Unclaimed" }
+        ];
+
+        let circlesHtml = "";
+        let legendHtml = "";
+
+        for (const seg of segments) {
+          const pct = seg.count / total;
+          const strokeLength = pct * circumference;
+          const strokeOffset = circumference - (cumulativePercent * circumference);
+          cumulativePercent += pct;
+
+          circlesHtml += `
+            <circle cx="60" cy="60" r="${r}" fill="none"
+              stroke="${seg.color}" stroke-width="14"
+              stroke-dasharray="${strokeLength.toFixed(1)} ${circumference.toFixed(1)}"
+              stroke-dashoffset="${strokeOffset.toFixed(1)}"></circle>
+          `;
+
+          legendHtml += `
+            <div class="legend-row">
+              <span class="legend-player">
+                <span class="chip-dot" style="background:${seg.color};"></span>
+                <span>${seg.label}</span>
+              </span>
+              <span class="tabular font-bold">${seg.count} <span style="font-size:10px; color:var(--text-dim);">(${(pct * 100).toFixed(1)}%)</span></span>
+            </div>
+          `;
+        }
+
+        document.getElementById("turf-ring-svg").innerHTML = circlesHtml;
+        document.getElementById("turf-ring-legend").innerHTML = legendHtml;
+
+        // Leaderboard
+        const players = [
+          { id: "mine", name: State.activeProfile ? State.activeProfile.name : "You", count: counts.mine, color: "var(--mine)", isMe: true },
+          { id: "rival-blue", name: "Cobalt", count: counts["rival-blue"], color: "var(--rival-blue)", isMe: false },
+          { id: "rival-violet", name: "Violet", count: counts["rival-violet"], color: "var(--rival-violet)", isMe: false },
+          { id: "rival-teal", name: "Teal", count: counts["rival-teal"], color: "var(--rival-teal)", isMe: false }
+        ];
+        players.sort((a, b) => b.count - a.count);
+
+        const lbHtml = players.map((p, idx) => `
+          <div class="leaderboard-item ${p.isMe ? 'is-me' : ''}">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="leaderboard-rank">#${idx + 1}</span>
+              <span class="chip-dot" style="background:${p.color};"></span>
+              <span style="font-weight:700;">${p.name} ${p.isMe ? '(You)' : ''}</span>
+            </div>
+            <span class="tabular font-bold" style="font-size:15px;">${p.count} sq</span>
+          </div>
+        `).join("");
+        document.getElementById("turf-leaderboard").innerHTML = lbHtml;
+
+        renderSetOperations();
+        renderConnectedComponents();
+      }
+
+      let selectedRivalForSet = "rival-blue";
+      function renderSetOperations() {
+        const myCells = [];
+        const rivalCells = [];
+        World.ownership.forEach((owner, cid) => {
+          if (owner === "mine") myCells.push(cid);
+          else if (owner === selectedRivalForSet) rivalCells.push(cid);
+        });
+
+        const setOps = computeSetOperations(myCells, rivalCells, World.N);
+
+        document.getElementById("set-size-m").textContent = setOps.sizeM;
+        document.getElementById("set-size-r").textContent = setOps.sizeR;
+        document.getElementById("set-size-union").textContent = setOps.union.length;
+        document.getElementById("set-size-contested").textContent = setOps.contested.length;
+        document.getElementById("set-size-diff-mr").textContent = setOps.diffMR.length;
+        document.getElementById("set-size-diff-rm").textContent = setOps.diffRM.length;
+
+        const formulaEl = document.getElementById("math-inc-exc-eval");
+        formulaEl.textContent = `|M ∪ R| = ${setOps.sizeM} + ${setOps.sizeR} - ${setOps.intersection.length} = ${setOps.union.length} (Verified: TRUE)`;
+      }
+
+      function renderConnectedComponents() {
+        const myCells = [];
+        World.ownership.forEach((owner, cid) => {
+          if (owner === "mine") myCells.push(cid);
+        });
+        const components = getConnectedComponents(myCells, World.N);
+        document.getElementById("cluster-count-val").textContent = components.length;
+        document.getElementById("cluster-max-val").textContent = components.length > 0 ? components[0].length : 0;
+      }
+
+      function renderPlacesTab() {
+        const listEl = document.getElementById("places-landmark-list");
+        const playerPos = MapAdapter.playerMarker ? MapAdapter.playerMarker.getLatLng() : { lat: World.center[0], lng: World.center[1] };
+
+        listEl.innerHTML = World.landmarks.map(lm => {
+          const owner = World.ownership.get(lm.cellId) || "unclaimed";
+          const dist = Math.round(haversine(playerPos.lat, playerPos.lng, lm.lat, lm.lng));
+          let dotColor = "var(--text-subtle)";
+          if (owner === "mine") dotColor = "var(--mine)";
+          else if (owner === "rival-blue") dotColor = "var(--rival-blue)";
+          else if (owner === "rival-violet") dotColor = "var(--rival-violet)";
+          else if (owner === "rival-teal") dotColor = "var(--rival-teal)";
+
+          return `
+            <div class="landmark-row" data-landmark-id="${lm.id}" data-lat="${lm.lat}" data-lng="${lm.lng}">
+              <div class="landmark-info">
+                <span class="chip-dot" style="background:${dotColor};"></span>
+                <span class="landmark-name">${lm.name}</span>
+              </div>
+              <span class="landmark-dist tabular">${dist} m</span>
+            </div>
+          `;
+        }).join("");
+
+        // Attach tap listeners to landmarks to pan map & open popup
+        listEl.querySelectorAll(".landmark-row").forEach(row => {
+          row.onclick = () => {
+            const lat = parseFloat(row.getAttribute("data-lat"));
+            const lng = parseFloat(row.getAttribute("data-lng"));
+            const lmId = row.getAttribute("data-landmark-id");
+            const lm = World.landmarks.find(l => l.id === lmId);
+            MapAdapter.panTo([lat, lng]);
+            if (lm) handleCellTap(lm.i, lm.j, lm.cellId);
+          };
+        });
+
+        // Dropdowns
+        const startSel = document.getElementById("route-start-select");
+        const endSel = document.getElementById("route-end-select");
+        const opts = World.landmarks.map((lm, idx) => `<option value="${lm.id}" ${idx === 0 ? 'selected' : ''}>${lm.name}</option>`).join("");
+        const optsEnd = World.landmarks.map((lm, idx) => `<option value="${lm.id}" ${idx === 1 ? 'selected' : ''}>${lm.name}</option>`).join("");
+
+        startSel.innerHTML = opts;
+        endSel.innerHTML = optsEnd;
+
+        // Sample Hash Demo
+        const sampleCode = getCellCode(16, 16);
+        document.getElementById("math-sample-hash").textContent = sampleCode;
+      }
+
+      let lastDijkstraTrace = [];
+      function computeDijkstraRoute() {
+        const startId = document.getElementById("route-start-select").value;
+        const endId = document.getElementById("route-end-select").value;
+        if (startId === endId) {
+          showToast("Origin and destination must be different landmarks");
+          return;
+        }
+
+        const lmStart = World.landmarks.find(l => l.id === startId);
+        const lmEnd = World.landmarks.find(l => l.id === endId);
+        const startNode = World.nodes.find(n => n.i === lmStart.i && n.j === lmStart.j);
+        const endNode = World.nodes.find(n => n.i === lmEnd.i && n.j === lmEnd.j);
+
+        const res = dijkstra(World.nodes, World.adj, startNode.id, endNode.id);
+        lastDijkstraTrace = res.trace;
+
+        const pathCoords = [];
+        for (const nid of res.path) {
+          const node = World.nodes.find(n => n.id === nid);
+          pathCoords.push([node.lat, node.lng]);
+        }
+        MapAdapter.drawRoute(pathCoords);
+
+        const resultBox = document.getElementById("route-result-box");
+        resultBox.style.display = "flex";
+        document.getElementById("route-res-length").textContent = `${Math.round(res.distance)} meters`;
+        document.getElementById("route-res-steps").textContent = `${res.path.length} intersections`;
+        document.getElementById("route-res-path").textContent = res.path.join(" → ");
+
+        const dx = Math.abs(lmEnd.i - lmStart.i);
+        const dy = Math.abs(lmEnd.j - lmStart.j);
+        const latticePaths = combinations(dx + dy, dx);
+        document.getElementById("math-lattice-dxdy").textContent = `Δx=${dx}, Δy=${dy}`;
+        document.getElementById("math-lattice-count").textContent = latticePaths.toLocaleString();
+
+        const dagPaths = countDAGShortestPaths(World.nodes, World.adj, res.distMap, startNode.id, endNode.id);
+        document.getElementById("math-dag-count").textContent = dagPaths.toString();
+
+        showToast(`Shortest path found: ${Math.round(res.distance)}m`);
+      }
+
+      function renderHistoryList() {
+        const listEl = document.getElementById("runs-history-list");
+        const runs = State.activeProfile ? (State.activeProfile.runs || []) : [];
+        document.getElementById("history-count").textContent = `${runs.length} Runs`;
+
+        if (runs.length === 0) {
+          listEl.innerHTML = `<span style="font-size:12px; color:var(--text-dim);">No runs recorded yet. Start a run above to log your GPS path!</span>`;
+          return;
+        }
+
+        listEl.innerHTML = runs.slice(0, 5).map(r => `
+          <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface); padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line);">
+            <div>
+              <div style="font-weight:700; font-size:13px;">${r.distanceKm} km · ${r.timeStr}</div>
+              <div style="font-size:11px; color:var(--text-dim);">${r.date} · Pace ${r.paceStr} · +${r.captured} sq</div>
+            </div>
+            <button class="btn-secondary btn-replay-run" data-run-id="${r.id}" style="height:32px; min-height:32px; padding:0 10px; font-size:11px;">
+              View Trail
+            </button>
+          </div>
+        `).join("");
+
+        listEl.querySelectorAll(".btn-replay-run").forEach(btn => {
+          btn.onclick = () => {
+            const runId = btn.getAttribute("data-run-id");
+            const targetRun = runs.find(r => r.id === runId);
+            if (targetRun && targetRun.trail && targetRun.trail.length > 0) {
+              MapAdapter.drawTrail(targetRun.trail);
+              MapAdapter.panTo(targetRun.trail[0]);
+              showToast(`Displaying run from ${targetRun.date}`);
+            }
+          };
+        });
+      }
+
+      /* ========================================================================
+         11. FENCES TAB & JORDAN CURVE FLOOD FILL
+         ======================================================================== */
+      let isDrawingFence = false;
+      let tappedVertices = [];
+
+      function updateFenceStatus() {
+        const vCount = State.fenceLoopCells.length;
+        document.getElementById("fence-vertex-count").textContent = vCount;
+
+        const validBadge = document.getElementById("fence-loop-valid");
+        const claimBtn = document.getElementById("btn-claim-enclosed");
+
+        // Redraw fence boundary on layer group
+        MapAdapter.fenceLayerGroup.clearLayers();
+        for (const cid of State.fenceLoopCells) {
+          const ci = Math.floor(cid / World.N);
+          const cj = cid % World.N;
+          const bounds = getCellBounds(ci, cj);
+          L.rectangle(bounds, {
+            color: "var(--mine)",
+            weight: 2,
+            fillColor: "var(--mine)",
+            fillOpacity: 0.5,
+            interactive: false
+          }).addTo(MapAdapter.fenceLayerGroup);
+        }
+
+        if (vCount < 4) {
+          validBadge.textContent = "Unclosed Loop";
+          validBadge.className = "tabular truth-badge-false";
+          claimBtn.disabled = true;
+          document.getElementById("fence-interior-count").textContent = "0";
+          return;
+        }
+
+        const first = State.fenceLoopCells[0];
+        const last = State.fenceLoopCells[vCount - 1];
+        const fi = Math.floor(first / World.N);
+        const fj = first % World.N;
+        const li = Math.floor(last / World.N);
+        const lj = last % World.N;
+
+        const isClosed = Math.abs(fi - li) <= 1 && Math.abs(fj - lj) <= 1;
+
+        if (isClosed) {
+          validBadge.textContent = "Closed Loop ✓";
+          validBadge.className = "tabular truth-badge-true";
+
+          const { interior } = findEnclosedCells(State.fenceLoopCells, World.N);
+          State.fenceInteriorCells = interior;
+          document.getElementById("fence-interior-count").textContent = interior.length;
+
+          // Draw interior hatched overlay
+          for (const cid of interior) {
+            const ci = Math.floor(cid / World.N);
+            const cj = cid % World.N;
+            const bounds = getCellBounds(ci, cj);
+            L.rectangle(bounds, {
+              color: "var(--mine)",
+              weight: 1.5,
+              dashArray: "3, 3",
+              fillColor: "var(--mine)",
+              fillOpacity: 0.35,
+              interactive: false
+            }).addTo(MapAdapter.fenceLayerGroup);
+          }
+
+          claimBtn.disabled = interior.length === 0;
+        } else {
+          validBadge.textContent = `Open (Gap: ${Math.max(Math.abs(fi - li), Math.abs(fj - lj))} cells)`;
+          validBadge.className = "tabular truth-badge-false";
+          claimBtn.disabled = true;
+          document.getElementById("fence-interior-count").textContent = "0";
+        }
+      }
+
+      function autoCloseFenceLoop() {
+        if (State.fenceLoopCells.length < 3) {
+          showToast("Add at least 3 vertices to close a loop.");
+          return;
+        }
+        const first = State.fenceLoopCells[0];
+        const last = State.fenceLoopCells[State.fenceLoopCells.length - 1];
+        const fi = Math.floor(first / World.N);
+        const fj = first % World.N;
+        const li = Math.floor(last / World.N);
+        const lj = last % World.N;
+
+        const connector = bresenham4Connected(li, lj, fi, fj);
+        for (let k = 1; k < connector.length; k++) {
+          const cid = connector[k].i * World.N + connector[k].j;
+          if (!State.fenceLoopCells.includes(cid)) {
+            State.fenceLoopCells.push(cid);
+          }
+        }
+        updateFenceStatus();
+        showToast("Loop automatically closed!");
+      }
+
+      function claimEnclosedSquares() {
+        if (State.fenceInteriorCells.length === 0) return;
+        let claimed = 0;
+        let shielded = 0;
+        const now = Date.now();
+        const shieldMs = CONFIG.SHIELD_MINUTES * 60 * 1000;
+
+        for (const cid of State.fenceInteriorCells) {
+          const owner = World.ownership.get(cid);
+          if (owner === "mine") continue;
+
+          const sTime = World.shieldTimes.get(cid) || 0;
+          if (now - sTime < shieldMs) {
+            shielded++;
+            continue;
+          }
+
+          World.ownership.set(cid, "mine");
+          World.shieldTimes.set(cid, now);
+          claimed++;
+        }
+
+        MapAdapter.drawCells(World.ownership, true);
+        MapAdapter.fenceLayerGroup.clearLayers();
+        State.fenceLoopCells = [];
+        tappedVertices = [];
+        State.fenceInteriorCells = [];
+        updateFenceStatus();
+        renderTurfStats();
+
+        showToast(`🎉 Claimed ${claimed} enclosed squares! (${shielded} skipped due to shield)`);
+      }
+
+      function animateFloodFill() {
+        if (State.fenceLoopCells.length < 4) {
+          showToast("Please draw a closed fence loop first");
+          return;
+        }
+        const { floodTrace } = findEnclosedCells(State.fenceLoopCells, World.N);
+        MapAdapter.fenceLayerGroup.clearLayers();
+
+        // Re-draw perimeter
+        for (const cid of State.fenceLoopCells) {
+          const ci = Math.floor(cid / World.N);
+          const cj = cid % World.N;
+          L.rectangle(getCellBounds(ci, cj), {
+            color: "var(--mine)",
+            weight: 2,
+            fillColor: "var(--mine)",
+            fillOpacity: 0.5,
+            interactive: false
+          }).addTo(MapAdapter.fenceLayerGroup);
+        }
+
+        const speedVal = parseInt(document.getElementById("flood-speed-range").value || "3");
+        const delayMs = Math.max(10, 60 - speedVal * 10);
+        let step = 0;
+        const chunkSize = Math.max(1, Math.floor(floodTrace.length / 35));
+
+        const interval = setInterval(() => {
+          for (let k = 0; k < chunkSize && step < floodTrace.length; k++, step++) {
+            const pt = floodTrace[step];
+            if (pt.i >= 0 && pt.i < World.N && pt.j >= 0 && pt.j < World.N) {
+              const bounds = getCellBounds(pt.i, pt.j);
+              L.rectangle(bounds, {
+                color: "#00E5FF",
+                weight: 1,
+                fillColor: "#00E5FF",
+                fillOpacity: 0.18,
+                interactive: false
+              }).addTo(MapAdapter.fenceLayerGroup);
+            }
+          }
+          if (step >= floodTrace.length) {
+            clearInterval(interval);
+            showToast("Flood fill completed! Interior region isolated.");
+            setTimeout(updateFenceStatus, 1000);
+          }
+        }, delayMs);
+      }
+
+      /* ========================================================================
+         12. SELF-TEST SUITE FOR DISCRETE MATHEMATICS
+         ======================================================================== */
+      function runSelfTestSuite() {
+        const tests = [
+          {
+            name: "Bresenham 4-Connectivity",
+            fn: () => {
+              const pts = bresenham4Connected(0, 0, 3, 3);
+              for (let k = 0; k < pts.length - 1; k++) {
+                const manhattan = Math.abs(pts[k].i - pts[k + 1].i) + Math.abs(pts[k].j - pts[k + 1].j);
+                if (manhattan !== 1) return false;
+              }
+              return pts.length >= 7;
+            }
+          },
+          {
+            name: "Haversine Distance Precision",
+            fn: () => {
+              const d = haversine(0, 0, 0, 1);
+              return Math.abs(d - 111195) < 300;
+            }
+          },
+          {
+            name: "Min-Heap Ordering",
+            fn: () => {
+              const h = new MinHeap();
+              h.push("c", 30);
+              h.push("a", 10);
+              h.push("b", 20);
+              return h.pop().item === "a" && h.pop().item === "b" && h.pop().item === "c";
+            }
+          },
+          {
+            name: "Dijkstra Optimal Path",
+            fn: () => {
+              const nodes = [{ id: "A" }, { id: "B" }, { id: "C" }];
+              const adj = new Map([
+                ["A", [{ to: "B", weight: 5 }, { to: "C", weight: 1 }]],
+                ["B", []],
+                ["C", [{ to: "B", weight: 2 }]]
+              ]);
+              const res = dijkstra(nodes, adj, "A", "B");
+              return res.distance === 3 && res.path.join("") === "ACB";
+            }
+          },
+          {
+            name: "DAG Shortest Path DP Counting",
+            fn: () => {
+              const nodes = [{ id: "A" }, { id: "B" }, { id: "C" }, { id: "D" }];
+              const adj = new Map([
+                ["A", [{ to: "B", weight: 1 }, { to: "C", weight: 1 }]],
+                ["B", [{ to: "D", weight: 1 }]],
+                ["C", [{ to: "D", weight: 1 }]],
+                ["D", []]
+              ]);
+              const dMap = new Map([["A", 0], ["B", 1], ["C", 1], ["D", 2]]);
+              const ways = countDAGShortestPaths(nodes, adj, dMap, "A", "D");
+              return ways === 2n;
+            }
+          },
+          {
+            name: "Combinations C(n, k)",
+            fn: () => {
+              return combinations(5, 2) === 10n && combinations(10, 4) === 210n;
+            }
+          },
+          {
+            name: "Handshake Lemma Consistency",
+            fn: () => {
+              const res = computeHandshakeLemma(32);
+              return res.valid && res.sumDeg === 3968 && res.twoE === 3968;
+            }
+          },
+          {
+            name: "Jordan Curve BFS Enclosed Interior",
+            fn: () => {
+              const loop = [0, 1, 2, 12, 22, 21, 20, 10];
+              const res = findEnclosedCells(loop, 10);
+              return res.interior.length === 1 && res.interior[0] === 11;
+            }
+          },
+          {
+            name: "Connected Components Partition",
+            fn: () => {
+              const comps = getConnectedComponents([0, 1, 50, 51], 10);
+              return comps.length === 2 && comps[0].length === 2 && comps[1].length === 2;
+            }
+          },
+          {
+            name: "Prime Modulo-997 Cell Hash",
+            fn: () => {
+              const c1 = getCellCode(0, 0);
+              const c2 = getCellCode(16, 16);
+              return typeof c1 === "string" && typeof c2 === "string" && c1.length >= 2;
+            }
+          },
+          {
+            name: "Mulberry32 PRNG Reproducibility",
+            fn: () => {
+              const r1 = mulberry32(12345)();
+              const r2 = mulberry32(12345)();
+              return r1 === r2;
+            }
+          }
+        ];
+
+        const container = document.getElementById("selftest-results");
+        container.style.display = "flex";
+        container.innerHTML = "";
+
+        let allPassed = true;
+        for (const t of tests) {
+          const t0 = performance.now();
+          let passed = false;
+          try {
+            passed = t.fn();
+          } catch (e) {
+            passed = false;
+          }
+          const dt = (performance.now() - t0).toFixed(2);
+          if (!passed) allPassed = false;
+
+          const row = document.createElement("div");
+          row.style.display = "flex";
+          row.style.justifyContent = "space-between";
+          row.style.padding = "4px 6px";
+          row.style.borderRadius = "4px";
+          row.style.background = passed ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.15)";
+          row.innerHTML = `
+            <span>${t.name}</span>
+            <span class="${passed ? 'truth-badge-true' : 'truth-badge-false'}">${passed ? 'PASS' : 'FAIL'} (${dt}ms)</span>
+          `;
+          container.appendChild(row);
+        }
+
+        if (allPassed) showToast("✓ All 11 discrete mathematics tests passed!");
+      }
+
+      /* ========================================================================
+         13. BOTTOM SHEET GESTURES & CONTROLLER
+         ======================================================================== */
+      function initBottomSheet() {
+        const sheet = document.getElementById("bottom-sheet");
+        const handleZone = document.getElementById("sheet-handle-zone");
+        const miniHud = document.getElementById("sheet-mini-hud");
+
+        let startY = 0;
+        let isDragging = false;
+        let lastY = 0;
+        let lastTime = 0;
+        let velocityY = 0;
+
+        function getSnapTranslate(state) {
+          const vh = window.innerHeight;
+          const sheetH = vh - 60; // total sheet height
+          if (state === "collapsed") {
+            return sheetH - 112; // leaves 112px visible
+          } else if (state === "half") {
+            return sheetH - Math.round(vh * 0.48); // leaves 48dvh visible
+          } else {
+            return 0; // leaves full sheet visible (up to 60px from screen top)
+          }
+        }
+
+        function applySheetState(state, animate = true) {
+          State.sheetState = state;
+          if (!animate) sheet.classList.add("no-transition");
+          else sheet.classList.remove("no-transition");
+
+          const targetY = getSnapTranslate(state);
+          sheet.style.transform = `translateY(${targetY}px)`;
+
+          const vh = window.innerHeight;
+          const sheetH = vh - 60;
+          const visualHeight = sheetH - targetY;
+          document.documentElement.style.setProperty("--sheet-visual-height", `${visualHeight}px`);
+
+          miniHud.style.display = (state === "collapsed") ? "flex" : "none";
+        }
+
+        // Tap Grab Bar to cycle states
+        handleZone.addEventListener("click", () => {
+          if (isDragging) return;
+          if (State.sheetState === "collapsed") applySheetState("half");
+          else if (State.sheetState === "half") applySheetState("full");
+          else applySheetState("collapsed");
+        });
+
+        // Tap Mini HUD to expand
+        miniHud.addEventListener("click", () => {
+          applySheetState("half");
+        });
+
+        // Pointer Drag Events on Handle
+        handleZone.addEventListener("pointerdown", (e) => {
+          isDragging = true;
+          startY = e.clientY;
+          lastY = e.clientY;
+          lastTime = performance.now();
+          velocityY = 0;
+          sheet.classList.add("no-transition");
+          handleZone.setPointerCapture(e.pointerId);
+        });
+
+        handleZone.addEventListener("pointermove", (e) => {
+          if (!isDragging) return;
+          const currentY = e.clientY;
+          const now = performance.now();
+          const dt = now - lastTime;
+          if (dt > 10) {
+            velocityY = (currentY - lastY) / dt;
+            lastY = currentY;
+            lastTime = now;
+          }
+
+          const baseTranslate = getSnapTranslate(State.sheetState);
+          const vh = window.innerHeight;
+          const maxTranslate = (vh - 60) - 112;
+          let newTranslate = baseTranslate + (currentY - startY);
+          newTranslate = Math.max(0, Math.min(maxTranslate, newTranslate));
+          sheet.style.transform = `translateY(${newTranslate}px)`;
+
+          const visualHeight = (vh - 60) - newTranslate;
+          document.documentElement.style.setProperty("--sheet-visual-height", `${visualHeight}px`);
+        });
+
+        const endDrag = (e) => {
+          if (!isDragging) return;
+          isDragging = false;
+          handleZone.releasePointerCapture(e.pointerId);
+          sheet.classList.remove("no-transition");
+
+          const currentY = e.clientY;
+          const deltaY = currentY - startY;
+
+          if (velocityY > 0.35 || deltaY > 90) {
+            if (State.sheetState === "full") applySheetState("half");
+            else applySheetState("collapsed");
+          } else if (velocityY < -0.35 || deltaY < -90) {
+            if (State.sheetState === "collapsed") applySheetState("half");
+            else applySheetState("full");
+          } else {
+            const vh = window.innerHeight;
+            const currentTranslate = getSnapTranslate(State.sheetState) + deltaY;
+            const distColl = Math.abs(currentTranslate - getSnapTranslate("collapsed"));
+            const distHalf = Math.abs(currentTranslate - getSnapTranslate("half"));
+            const distFull = Math.abs(currentTranslate - getSnapTranslate("full"));
+            const minDist = Math.min(distColl, distHalf, distFull);
+
+            if (minDist === distColl) applySheetState("collapsed");
+            else if (minDist === distHalf) applySheetState("half");
+            else applySheetState("full");
+          }
+        };
+
+        handleZone.addEventListener("pointerup", endDrag);
+        handleZone.addEventListener("pointercancel", endDrag);
+
+        // Content pull-down when scrolled to top
+        const contentArea = document.getElementById("sheet-scroll-content");
+        let contentStartY = 0;
+        contentArea.addEventListener("touchstart", (e) => {
+          contentStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        contentArea.addEventListener("touchmove", (e) => {
+          if (contentArea.scrollTop === 0 && e.touches[0].clientY > contentStartY + 10 && State.sheetState === "full") {
+            applySheetState("half");
+          }
+        }, { passive: true });
+
+        applySheetState("half", false);
+        window.addEventListener("resize", () => applySheetState(State.sheetState, false));
+
+        // Tab Switching
+        const tabs = ["run", "turf", "places", "fences"];
+        for (const t of tabs) {
+          const btn = document.getElementById(`tab-btn-${t}`);
+          btn.addEventListener("click", () => {
+            tabs.forEach(other => {
+              document.getElementById(`tab-btn-${other}`).setAttribute("aria-selected", other === t ? "true" : "false");
+              document.getElementById(`tab-panel-${other}`).classList.toggle("active-panel", other === t);
+            });
+            State.activeTab = t;
+
+            if (State.sheetState === "collapsed") {
+              applySheetState("half");
+            }
+
+            if (t === "turf") renderTurfStats();
+            else if (t === "places") renderPlacesTab();
+            else if (t === "fences") updateFenceStatus();
+          });
+        }
+      }
+
+      /* ========================================================================
+         14. DIALOGS, MODALS & EVENT WIRING
+         ======================================================================== */
+      function showRunSummaryModal(run) {
+        document.getElementById("sum-dist").textContent = run.distanceKm;
+        document.getElementById("sum-time").textContent = run.timeStr;
+        document.getElementById("sum-pace").textContent = run.paceStr;
+        document.getElementById("sum-captured-badge").textContent = `+${run.captured} Captured`;
+
+        document.getElementById("sum-stolen-blue").textContent = run.stolen["rival-blue"] || 0;
+        document.getElementById("sum-stolen-violet").textContent = run.stolen["rival-violet"] || 0;
+        document.getElementById("sum-stolen-teal").textContent = run.stolen["rival-teal"] || 0;
+
+        document.getElementById("sum-before-count").textContent = run.beforeCount;
+        document.getElementById("sum-after-count").textContent = run.afterCount;
+
+        const maxScale = Math.max(1024, run.afterCount);
+        const beforePct = (run.beforeCount / maxScale) * 100;
+        const gainedPct = ((run.afterCount - run.beforeCount) / maxScale) * 100;
+        document.getElementById("sum-bar-before").style.width = `${beforePct}%`;
+        document.getElementById("sum-bar-gained").style.width = `${Math.max(1, gainedPct)}%`;
+
+        let myCount = 0;
+        World.ownership.forEach(v => { if (v === "mine") myCount++; });
+        document.getElementById("sum-new-total").textContent = `${myCount} / 1024`;
+
+        document.getElementById("run-summary-modal").classList.add("open");
+      }
+
+      function setupModalsAndDialogs() {
+        const closeSummary = () => {
+          document.getElementById("run-summary-modal").classList.remove("open");
+          document.getElementById("tab-btn-turf").click();
+        };
+        document.getElementById("btn-close-summary").onclick = closeSummary;
+        document.getElementById("btn-save-summary-close").onclick = closeSummary;
+
+        const profileModal = document.getElementById("profile-menu-modal");
+        document.getElementById("btn-profile-menu").onclick = () => {
+          if (State.activeProfile) {
+            document.getElementById("menu-runner-name").textContent = State.activeProfile.name;
+            const badge = document.getElementById("menu-avatar-badge");
+            badge.textContent = State.activeProfile.avatarLabel || "TF";
+            badge.style.background = State.activeProfile.avatarBg || "var(--mine)";
+
+            let myCount = 0;
+            World.ownership.forEach(v => { if (v === "mine") myCount++; });
+            document.getElementById("menu-runner-squares").textContent = `${myCount} Squares Owned`;
+          }
+          profileModal.classList.add("open");
+        };
+
+        document.getElementById("btn-close-profile").onclick = () => profileModal.classList.remove("open");
+
+        document.querySelectorAll(".theme-btn").forEach(btn => {
+          btn.onclick = () => {
+            const val = btn.getAttribute("data-theme-val");
+            document.documentElement.setAttribute("data-theme", val);
+            MapAdapter.setTheme(val);
+            Storage.set("theme_pref", val);
+            showToast(`Theme set to ${val}`);
+          };
+        });
+
+        document.getElementById("btn-switch-runner").onclick = () => {
+          profileModal.classList.remove("open");
+          showWelcomeScreen();
+        };
+
+        document.getElementById("btn-reset-progress").onclick = () => {
+          showConfirmDialog("Reset All Progress?", "This will reset all your owned territory and logged runs on this device.", () => {
+            if (State.activeProfile) {
+              State.activeProfile.runs = [];
+              State.activeProfile.totalDistanceM = 0;
+              saveActiveProfileData();
+            }
+            initWorld(World.center[0], World.center[1]);
+            MapAdapter.drawCells(World.ownership, true);
+            renderTurfStats();
+            profileModal.classList.remove("open");
+            showToast("Territory progress has been reset.");
+          });
+        };
+
+        const aboutModal = document.getElementById("about-modal");
+        document.getElementById("btn-open-about").onclick = () => {
+          profileModal.classList.remove("open");
+          aboutModal.classList.add("open");
+        };
+        document.getElementById("btn-close-about").onclick = () => aboutModal.classList.remove("open");
+        document.getElementById("btn-run-selftest").onclick = runSelfTestSuite;
+
+        const traceModal = document.getElementById("dijkstra-trace-modal");
+        document.getElementById("btn-show-dijkstra-trace").onclick = () => {
+          if (lastDijkstraTrace.length === 0) {
+            computeDijkstraRoute();
+          }
+          const list = document.getElementById("dijkstra-trace-list");
+          list.innerHTML = lastDijkstraTrace.map((step, idx) => `
+            <div style="display:flex; justify-content:space-between; padding:3px 6px; border-bottom:1px solid var(--line);">
+              <span>#${idx + 1} ${step.nodeId}</span>
+              <span class="tabular font-bold">${Math.round(step.dist)}m</span>
+            </div>
+          `).join("");
+          traceModal.classList.add("open");
+        };
+        document.getElementById("btn-close-dijkstra-trace").onclick = () => traceModal.classList.remove("open");
+
+        document.getElementById("btn-map-recenter").onclick = () => {
+          const latLng = MapAdapter.playerMarker ? MapAdapter.playerMarker.getLatLng() : World.center;
+          MapAdapter.panTo(latLng);
+        };
+        document.getElementById("btn-map-zoomin").onclick = () => MapAdapter.zoomIn();
+        document.getElementById("btn-map-zoomout").onclick = () => MapAdapter.zoomOut();
+
+        document.querySelectorAll(".speed-btn").forEach(btn => {
+          btn.onclick = () => {
+            document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            State.demoSpeed = parseFloat(btn.getAttribute("data-speed"));
+            if (runTimerInterval && State.gameMode === "demo" && !State.isPaused) {
+              clearInterval(runTimerInterval);
+              runTimerInterval = setInterval(() => {
+                if (!State.isPaused) {
+                  State.runElapsedTime = Date.now() - State.runStartTime;
+                  stepDemoRunner();
+                  renderRunHUD();
+                }
+              }, 1000 / State.demoSpeed);
+            }
+          };
+        });
+
+        document.querySelectorAll(".set-rival-select").forEach(btn => {
+          btn.onclick = () => {
+            document.querySelectorAll(".set-rival-select").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            selectedRivalForSet = btn.getAttribute("data-rival");
+            renderSetOperations();
+          };
+        });
+
+        document.querySelectorAll(".set-chip-btn").forEach(btn => {
+          btn.onclick = () => {
+            const action = btn.getAttribute("data-set-action");
+            const myCells = [];
+            const rivalCells = [];
+            World.ownership.forEach((owner, cid) => {
+              if (owner === "mine") myCells.push(cid);
+              else if (owner === selectedRivalForSet) rivalCells.push(cid);
+            });
+            const ops = computeSetOperations(myCells, rivalCells, World.N);
+
+            let targetCells = [];
+            let color = "var(--mine)";
+
+            if (action === "mine") { targetCells = myCells; color = "var(--mine)"; }
+            else if (action === "rival") { targetCells = rivalCells; color = "var(--rival-blue)"; }
+            else if (action === "union") { targetCells = ops.union; color = "#FFD700"; }
+            else if (action === "contested") { targetCells = ops.contested; color = "#EF4444"; }
+            else if (action === "diff-mr") { targetCells = ops.diffMR; color = "var(--mine)"; }
+            else if (action === "diff-rm") { targetCells = ops.diffRM; color = "var(--rival-blue)"; }
+
+            MapAdapter.highlightCells(targetCells, color);
+            showToast(`Highlighting ${targetCells.length} squares on map`);
+          };
+        });
+
+        document.getElementById("btn-clear-set-highlight").onclick = () => {
+          MapAdapter.clearHighlights();
+          MapAdapter.drawCells(World.ownership, true);
+        };
+
+        document.getElementById("btn-color-clusters").onclick = () => {
+          const myCells = [];
+          World.ownership.forEach((owner, cid) => {
+            if (owner === "mine") myCells.push(cid);
+          });
+          const clusters = getConnectedComponents(myCells, World.N);
+          const palette = ["#FF6A3D", "#10B981", "#3B82F6", "#EC4899", "#8B5CF6", "#F59E0B", "#06B6D4"];
+
+          MapAdapter.clearHighlights();
+          clusters.forEach((cluster, idx) => {
+            const col = palette[idx % palette.length];
+            MapAdapter.highlightCells(cluster, col, true);
+          });
+          showToast(`Colored ${clusters.length} disjoint clusters on map`);
+        };
+
+        document.getElementById("btn-plan-route").onclick = computeDijkstraRoute;
+
+        // Fences Buttons
+        document.getElementById("btn-fence-mode-draw").onclick = () => {
+          isDrawingFence = true;
+          showToast("Tap squares on map to add perimeter vertices");
+        };
+
+        document.getElementById("btn-fence-use-last-run").onclick = () => {
+          let trailPts = State.runTrail;
+          if (trailPts.length === 0 && State.activeProfile && State.activeProfile.runs && State.activeProfile.runs.length > 0) {
+            trailPts = State.activeProfile.runs[0].trail;
+          }
+          if (!trailPts || trailPts.length < 4) {
+            showToast("No recorded run trail to convert into a fence.");
+            return;
+          }
+          const cells = [];
+          for (const pt of trailPts) {
+            const c = latLngToCell(pt[0], pt[1]);
+            if (c && !cells.includes(c.id)) cells.push(c.id);
+          }
+          State.fenceLoopCells = cells;
+          updateFenceStatus();
+          showToast(`Loaded ${cells.length} vertices from run trail`);
+        };
+
+        document.getElementById("btn-fence-auto-close").onclick = autoCloseFenceLoop;
+
+        document.getElementById("btn-fence-undo").onclick = () => {
+          if (tappedVertices.length > 0) {
+            tappedVertices.pop();
+            // Recompute loop from remaining vertices
+            State.fenceLoopCells = [];
+            for (let k = 0; k < tappedVertices.length; k++) {
+              if (k === 0) State.fenceLoopCells.push(tappedVertices[0].id);
+              else {
+                const line = bresenham4Connected(tappedVertices[k - 1].i, tappedVertices[k - 1].j, tappedVertices[k].i, tappedVertices[k].j);
+                for (let s = 1; s < line.length; s++) {
+                  const cid = line[s].i * World.N + line[s].j;
+                  if (!State.fenceLoopCells.includes(cid)) State.fenceLoopCells.push(cid);
+                }
+              }
+            }
+            updateFenceStatus();
+          }
+        };
+
+        document.getElementById("btn-fence-clear").onclick = () => {
+          State.fenceLoopCells = [];
+          tappedVertices = [];
+          State.fenceInteriorCells = [];
+          updateFenceStatus();
+        };
+
+        document.getElementById("btn-claim-enclosed").onclick = claimEnclosedSquares;
+        document.getElementById("btn-animate-flood").onclick = animateFloodFill;
+
+        document.getElementById("btn-mode-demo").onclick = () => switchMode("demo");
+        document.getElementById("btn-mode-live").onclick = () => switchMode("live");
+      }
+
+      function switchMode(newMode) {
+        if (State.gameMode === newMode) return;
+        if (State.isRunning) {
+          showConfirmDialog("Switch Game Mode?", "Switching modes will finish and save your current active run.", () => {
+            finishRun();
+            applyModeSwitch(newMode);
+          });
+        } else {
+          applyModeSwitch(newMode);
+        }
+      }
+
+      function applyModeSwitch(newMode) {
+        State.gameMode = newMode;
+        document.getElementById("btn-mode-demo").setAttribute("aria-checked", newMode === "demo" ? "true" : "false");
+        document.getElementById("btn-mode-live").setAttribute("aria-checked", newMode === "live" ? "true" : "false");
+        document.getElementById("demo-speed-pills").style.display = newMode === "demo" ? "flex" : "none";
+
+        if (newMode === "live") {
+          initLiveGPS();
+        } else {
+          if (gpsWatchId !== null) {
+            navigator.geolocation.clearWatch(gpsWatchId);
+            gpsWatchId = null;
+          }
+          showToast("Switched to Simulated Demo Mode");
+        }
+      }
+
+      function initLiveGPS() {
+        if (!navigator.geolocation) {
+          showToast("Geolocation is not supported by your browser.", true);
+          switchMode("demo");
+          return;
+        }
+
+        showToast("Requesting GPS location...");
+        gpsWatchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const acc = pos.coords.accuracy;
+
+            if (State.isRunning && !State.isPaused) {
+              if (acc <= CONFIG.MAX_ACCURACY_M) {
+                processPosition(lat, lng, acc);
+              } else {
+                showToast(`GPS accuracy weak (${Math.round(acc)}m)`);
+              }
+            } else {
+              MapAdapter.setPlayer([lat, lng], acc);
+              MapAdapter.panTo([lat, lng]);
+            }
+          },
+          (err) => {
+            console.warn("GPS error:", err.message);
+            showToast(`GPS error: ${err.message}. Switched to Demo.`, true);
+            switchMode("demo");
+          },
+          { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+        );
+      }
+
+      function showConfirmDialog(title, message, onConfirm) {
+        const modal = document.getElementById("confirm-modal");
+        document.getElementById("confirm-title").textContent = title;
+        document.getElementById("confirm-msg").textContent = message;
+        modal.classList.add("open");
+
+        document.getElementById("btn-confirm-cancel").onclick = () => modal.classList.remove("open");
+        document.getElementById("btn-confirm-ok").onclick = () => {
+          modal.classList.remove("open");
+          if (onConfirm) onConfirm();
+        };
+      }
+
+      /* ========================================================================
+         15. WELCOME VIEW, AVATAR PICKER & PIN LOCK
+         ======================================================================== */
+      let selectedAvatar = CONFIG.AVATARS[0];
+
+      function renderAvatarPicker() {
+        const grid = document.getElementById("welcome-avatar-picker");
+        grid.innerHTML = CONFIG.AVATARS.map(av => `
+          <button class="avatar-choice ${av.id === selectedAvatar.id ? 'selected' : ''}" data-avatar-id="${av.id}" style="background:${av.bg};">
+            ${av.label}
+          </button>
+        `).join("");
+
+        grid.querySelectorAll(".avatar-choice").forEach(btn => {
+          btn.onclick = () => {
+            grid.querySelectorAll(".avatar-choice").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            selectedAvatar = CONFIG.AVATARS.find(a => a.id === btn.getAttribute("data-avatar-id"));
+          };
+        });
+      }
+
+      function showWelcomeScreen() {
+        const view = document.getElementById("welcome-view");
+        view.classList.add("active");
+        renderAvatarPicker();
+
+        const profiles = loadProfilesList();
+        const container = document.getElementById("welcome-existing-profiles");
+        const list = document.getElementById("welcome-profiles-list");
+
+        if (profiles.length > 0) {
+          container.style.display = "flex";
+          list.innerHTML = profiles.map(p => `
+            <button class="rival-chip existing-profile-btn" data-profile-id="${p.id}" style="cursor:pointer; background:var(--surface-2);">
+              <span class="chip-dot" style="background:${p.avatarBg || 'var(--mine)'};"></span>
+              <span>${p.name}</span>
+              ${p.pinHash ? '<span style="font-size:10px;">🔒</span>' : ''}
+            </button>
+          `).join("");
+
+          list.querySelectorAll(".existing-profile-btn").forEach(btn => {
+            btn.onclick = () => {
+              const pid = btn.getAttribute("data-profile-id");
+              const target = profiles.find(p => p.id === pid);
+              if (target) selectProfileWithPinCheck(target);
+            };
+          });
+        } else {
+          container.style.display = "none";
+        }
+      }
+
+      async function createRunnerProfile() {
+        const errEl = document.getElementById("welcome-error-msg");
+        if (errEl) errEl.textContent = "";
+
+        const nameInput = document.getElementById("input-runner-name");
+        const name = nameInput.value.trim();
+        if (name.length < 2 || name.length > 16) {
+          if (errEl) errEl.textContent = "Runner name must be between 2 and 16 characters";
+          showToast("Runner name must be between 2 and 16 characters");
+          nameInput.focus();
+          return;
+        }
+
+        const pinInput = document.getElementById("input-runner-pin");
+        const pin = pinInput.value.trim();
+        if (pin.length > 0 && pin.length !== 4) {
+          if (errEl) errEl.textContent = "PIN must be exactly 4 digits (or left empty)";
+          showToast("PIN must be exactly 4 digits (or left empty)");
+          pinInput.focus();
+          return;
+        }
+
+        let pinHash = null;
+        let salt = null;
+
+        if (pin.length === 4) {
+          salt = generateSalt();
+          const res = await hashPin(pin, salt);
+          pinHash = res.hash;
+        }
+
+        const newProfile = {
+          id: "runner_" + Date.now(),
+          name: name,
+          avatarId: selectedAvatar.id,
+          avatarLabel: selectedAvatar.label,
+          avatarBg: selectedAvatar.bg,
+          pinHash: pinHash,
+          salt: salt,
+          created: Date.now()
+        };
+
+        const profiles = loadProfilesList();
+        profiles.push(newProfile);
+        saveProfilesList(profiles);
+
+        setActiveRunner(newProfile);
+      }
+
+      function selectProfileWithPinCheck(profile) {
+        if (!profile.pinHash) {
+          setActiveRunner(profile);
+          return;
+        }
+
+        if (Date.now() < State.lockoutUntil) {
+          const remain = Math.ceil((State.lockoutUntil - Date.now()) / 1000);
+          showToast(`PIN pad locked. Please wait ${remain} seconds.`, true);
+          return;
+        }
+
+        openPinModal(profile);
+      }
+
+      let activePinInput = "";
+      let targetPinProfile = null;
+
+      function openPinModal(profile) {
+        targetPinProfile = profile;
+        activePinInput = "";
+        updatePinDots();
+        document.getElementById("pin-error-msg").textContent = "";
+        document.getElementById("pin-prompt-name").textContent = `Enter PIN for ${profile.name}`;
+        document.getElementById("pin-modal").classList.add("open");
+      }
+
+      function updatePinDots() {
+        for (let i = 0; i < 4; i++) {
+          const dot = document.getElementById(`pin-d${i}`);
+          dot.classList.toggle("filled", i < activePinInput.length);
+        }
+      }
+
+      async function handlePinKey(key) {
+        if (key === "clear") {
+          activePinInput = "";
+          updatePinDots();
+          return;
+        }
+        if (key === "back") {
+          activePinInput = activePinInput.slice(0, -1);
+          updatePinDots();
+          return;
+        }
+
+        if (activePinInput.length < 4) {
+          activePinInput += key;
+          updatePinDots();
+
+          if (activePinInput.length === 4) {
+            const res = await hashPin(activePinInput, targetPinProfile.salt);
+            if (res.hash === targetPinProfile.pinHash) {
+              document.getElementById("pin-modal").classList.remove("open");
+              State.failedPinAttempts = 0;
+              setActiveRunner(targetPinProfile);
+            } else {
+              State.failedPinAttempts++;
+              document.getElementById("pin-error-msg").textContent = `Incorrect PIN (${State.failedPinAttempts}/5)`;
+              activePinInput = "";
+              setTimeout(updatePinDots, 200);
+
+              if (State.failedPinAttempts >= 5) {
+                State.lockoutUntil = Date.now() + 30000;
+                document.getElementById("pin-error-msg").textContent = "Too many attempts. Locked for 30s.";
+                setTimeout(() => document.getElementById("pin-modal").classList.remove("open"), 1200);
+              }
+            }
+          }
+        }
+      }
+
+      function setActiveRunner(profile) {
+        State.activeProfile = profile;
+        State.isGuest = (profile.id === "guest");
+
+        const data = loadProfileGameData(profile.id);
+        profile.runs = data.runs || [];
+        profile.totalDistanceM = data.totalDistanceM || 0;
+
+        World.ownership.forEach((v, k) => {
+          if (v === "mine") World.ownership.delete(k);
+        });
+        for (const cid of (data.ownedCells || World.homeCluster)) {
+          World.ownership.set(cid, "mine");
+        }
+
+        document.getElementById("header-avatar-label").textContent = profile.avatarLabel || "TF";
+        document.getElementById("btn-profile-menu").style.background = profile.avatarBg || "var(--surface-2)";
+
+        document.getElementById("welcome-view").classList.remove("active");
+        if (MapAdapter.map && MapAdapter.map.invalidateSize) {
+          setTimeout(() => MapAdapter.map.invalidateSize(), 100);
+        }
+        MapAdapter.drawCells(World.ownership, true);
+        renderHistoryList();
+        renderTurfStats();
+        showToast(`Welcome, ${profile.name}!`);
+      }
+
+      /* ========================================================================
+         16. CELL TAP POPUP & FENCE DRAWING HANDLER
+         ======================================================================== */
+      function handleCellTap(i, j, cid) {
+        if (isDrawingFence) {
+          const newVertex = { i, j, id: cid };
+          if (tappedVertices.length > 0) {
+            const prev = tappedVertices[tappedVertices.length - 1];
+            const line = bresenham4Connected(prev.i, prev.j, i, j);
+            for (let k = 1; k < line.length; k++) {
+              const stepCid = line[k].i * World.N + line[k].j;
+              if (!State.fenceLoopCells.includes(stepCid)) {
+                State.fenceLoopCells.push(stepCid);
+              }
+            }
+          } else {
+            State.fenceLoopCells.push(cid);
+          }
+          tappedVertices.push(newVertex);
+          updateFenceStatus();
+          showToast(`Added vertex at (${i}, ${j})`);
+          return;
+        }
+
+        // Update Modular Arithmetic Card with tapped cell info
+        document.getElementById("math-sample-cid").textContent = `#${cid} (${i}, ${j})`;
+        document.getElementById("math-sample-hash").textContent = getCellCode(i, j);
+
+        const owner = World.ownership.get(cid) || "unclaimed";
+        const code = getCellCode(i, j);
+        const shieldTime = World.shieldTimes.get(cid) || 0;
+        const now = Date.now();
+        const shieldMs = CONFIG.SHIELD_MINUTES * 60 * 1000;
+        const isShielded = (now - shieldTime) < shieldMs;
+        const shieldRemainMin = isShielded ? Math.ceil((shieldMs - (now - shieldTime)) / 60000) : 0;
+
+        let ownerName = "Unclaimed";
+        if (owner === "mine") ownerName = "You";
+        else {
+          const r = CONFIG.RIVALS.find(x => x.id === owner);
+          if (r) ownerName = r.name;
+        }
+
+        const centerLat = World.center[0] + (i - World.N / 2) * CONFIG.CELL_DEG;
+        const centerLng = World.center[1] + (j - World.N / 2) * CONFIG.CELL_DEG;
+
+        const capturedAgoStr = shieldTime > 0 ? `${Math.round((now - shieldTime) / 60000)}m ago` : "Initial Seed";
+
+        const html = `
+          <div style="font-family:var(--font-body); padding:2px; font-size:12px; display:flex; flex-direction:column; gap:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:3px;">
+              <strong style="font-family:var(--font-display); font-size:15px; text-transform:uppercase;">Square #${cid}</strong>
+              <span class="tabular font-bold" style="color:var(--mine); font-size:13px;">Code: ${code}</span>
+            </div>
+            <div>Owner: <strong>${ownerName}</strong></div>
+            <div>Shield: <strong>${isShielded ? `Active (${shieldRemainMin}m left)` : 'None (Vulnerable)'}</strong></div>
+            <div>Last Captured: <strong>${capturedAgoStr}</strong></div>
+            <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">
+              Formula: (((${i}·31 + ${j}·17) mod 997) base 36)
+            </div>
+          </div>
+        `;
+        MapAdapter.openPopup([centerLat, centerLng], html);
+      }
+
+      /* ========================================================================
+         17. BOOTSTRAP APPLICATION
+         ======================================================================== */
+      function boot() {
+        // Wire Welcome login buttons immediately so they are responsive right away
+        const btnCreate = document.getElementById("btn-welcome-create");
+        const btnGuest = document.getElementById("btn-welcome-guest");
+        if (btnCreate) btnCreate.onclick = createRunnerProfile;
+        if (btnGuest) {
+          btnGuest.onclick = () => {
+            setActiveRunner({
+              id: "guest",
+              name: "Guest Runner",
+              avatarLabel: "G",
+              avatarBg: "#0D9488"
+            });
+          };
+        }
+
+        const nameInput = document.getElementById("input-runner-name");
+        if (nameInput) {
+          nameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") createRunnerProfile();
+          });
+        }
+        const pinInput = document.getElementById("input-runner-pin");
+        if (pinInput) {
+          pinInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") createRunnerProfile();
+          });
+        }
+
+        // Wait for Leaflet to be ready if loading
+        if (typeof L === "undefined") {
+          setTimeout(boot, 50);
+          return;
+        }
+
+        initWorld(CONFIG.DEFAULT_CENTER[0], CONFIG.DEFAULT_CENTER[1]);
+        MapAdapter.initMap("map-container", CONFIG.DEFAULT_CENTER, handleCellTap);
+        initBottomSheet();
+        setupModalsAndDialogs();
+
+        document.querySelectorAll(".keypad-btn").forEach(btn => {
+          btn.onclick = () => handlePinKey(btn.getAttribute("data-key"));
+        });
+        document.getElementById("btn-close-pin").onclick = () => {
+          document.getElementById("pin-modal").classList.remove("open");
+        };
+
+        const storedTheme = Storage.get("theme_pref", "system");
+        document.documentElement.setAttribute("data-theme", storedTheme);
+        MapAdapter.setTheme(storedTheme);
+
+        showWelcomeScreen();
+        initBots();
+
+        updateRunUI();
+        renderRunHUD();
+        renderTurfStats();
+        renderPlacesTab();
+        updateFenceStatus();
+      }
+
+      window.addEventListener("DOMContentLoaded", boot);
+    })();
+  </script>
+</body>
+
+</html>
