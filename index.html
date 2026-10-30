@@ -2202,10 +2202,9 @@
         MAX_SPEED_MS: 12, // max acceptable sprint speed (12 m/s ~ 43 km/h)
         PRNG_SEED: 133742,
         TILES: {
-          LIGHT: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-          DARK: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-          SUBDOMAINS: ["a", "b", "c", "d"],
-          ATTRIBUTION: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>'
+          LIGHT: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+          DARK: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+          ATTRIBUTION: '&copy; <a href="https://www.esri.com/" target="_blank">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
         },
         RIVALS: [
           { id: "rival-blue", name: "Cobalt", colorLight: "#1A73E8", colorDark: "#4C9AFF" },
@@ -3000,9 +2999,9 @@
 
           const url = resolved === "dark" ? CONFIG.TILES.DARK : CONFIG.TILES.LIGHT;
           this.tileLayer = L.tileLayer(url, {
-            subdomains: CONFIG.TILES.SUBDOMAINS,
             attribution: CONFIG.TILES.ATTRIBUTION,
-            maxZoom: 19
+            maxZoom: 19,
+            maxNativeZoom: 16
           }).addTo(this.map);
 
           // Update trail & marker color according to theme
